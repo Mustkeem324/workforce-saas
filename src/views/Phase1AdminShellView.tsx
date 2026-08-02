@@ -38,10 +38,10 @@ export const Phase1AdminShellView: React.FC<Phase1Props> = ({ onNavigateTab }) =
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Badge variant="accent">PHASE 1 DELIVERABLE</Badge>
-            <span className="text-xs text-[var(--text-tertiary)] font-mono">CORE AUTH, ORG & ADMIN SHELL</span>
+            <Badge variant="accent">ADMIN SHELL & NAVIGATION</Badge>
+            <span className="text-xs text-[var(--text-tertiary)] font-mono">CORE AUTH, ORG & SHELL</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1">Phase 1 — Admin Shell & Investor-Ready Polish</h1>
+          <h1 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1">Admin Shell & Command Palette</h1>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
             Command Palette (Cmd+K), persistent location switcher, animated onboarding wizard, content-shaped skeletons, and custom empty states.
           </p>

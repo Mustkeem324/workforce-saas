@@ -1,75 +1,70 @@
 import React, { useState } from 'react';
-import { Sparkles, CheckCircle2, ChevronRight, Gift, Rocket, ShieldCheck } from 'lucide-react';
+import { Gift, Sparkles, CheckCircle2, ChevronRight, Bell } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 
-export interface ReleaseNote {
+export interface ChangelogItem {
+  id: string;
   version: string;
   date: string;
   title: string;
-  features: string[];
+  description: string;
+  tag: string;
 }
 
-const RELEASES: ReleaseNote[] = [
+const CHANGELOG_ITEMS: ChangelogItem[] = [
   {
+    id: 'ch-1',
     version: 'v2.8.0',
-    date: 'August 2, 2026',
-    title: 'Phase 14-17 Enterprise & Growth Release',
-    features: [
-      'White-label live theme customizer with real-time admin re-skinning preview.',
-      'SAML 2.0 / OIDC SSO security center & self-serve GDPR org data exporter.',
-      'Heatmap cohort employee retention matrix & anonymized cross-tenant benchmarks.'
-    ]
+    date: 'August 02, 2026',
+    title: 'Enterprise & Growth Architecture Release',
+    description: 'Released SAML/OIDC SSO security center, self-serve GDPR data exporter, and ₹10,000 PLG referral program.',
+    tag: 'ENTERPRISE'
   },
   {
-    version: 'v2.6.0',
-    date: 'July 15, 2026',
-    title: 'Phase 10 Compliance & Audit Release',
-    features: [
-      'Side-by-side JSON diff inspection for all immutable audit log entries.',
-      'Statutory compliance traffic-light dashboard for zero-lapse tax filings.'
-    ]
+    id: 'ch-2',
+    version: 'v2.4.0',
+    date: 'July 20, 2026',
+    title: 'Statutory Compliance & Audit Trail Release',
+    description: 'Implemented immutable audit log with side-by-side JSON diffs and statutory compliance dashboard.',
+    tag: 'COMPLIANCE'
   }
 ];
 
 export const InAppChangelogPanel: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Top Banner */}
+      {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-5 rounded-2xl shadow-[var(--shadow-1)]">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[var(--accent-500)]" />
-            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">In-App Release Notes & Feature Changelog</h2>
-            <Badge variant="accent">NON-INTRUSIVE CHANGELOG</Badge>
+            <Bell className="w-5 h-5 text-[var(--accent-500)]" />
+            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">In-App Feature Release Changelog</h2>
+            <Badge variant="accent font-mono">v2.8.0 LIVE</Badge>
           </div>
           <p className="text-xs text-[var(--text-tertiary)] mt-1">
-            Keeps power users and HR admins engaged with new platform capabilities as features roll out.
+            Non-intrusive release notes panel notifying users of recent system updates and platform features.
           </p>
         </div>
       </div>
 
-      {/* Release Notes List */}
-      <div className="space-y-4">
-        {RELEASES.map(rel => (
-          <Card key={rel.version} elevation={2} className="space-y-3">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2 font-mono">
-              <div className="flex items-center gap-2">
-                <Badge variant="accent">{rel.version}</Badge>
-                <span className="font-bold text-sm font-sans text-[var(--text-primary)]">{rel.title}</span>
+      {/* Changelog Timeline */}
+      <div className="space-y-4 max-w-3xl mx-auto">
+        {CHANGELOG_ITEMS.map(item => (
+          <Card key={item.id} elevation={1} className="p-6 space-y-3 border-l-4 border-l-[var(--accent-500)]">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="neutral font-mono">{item.version}</Badge>
+                  <Badge variant="accent">{item.tag}</Badge>
+                </div>
+                <h3 className="text-base font-extrabold text-[var(--text-primary)] mt-1">{item.title}</h3>
               </div>
-              <span className="text-xs text-[var(--text-tertiary)]">{rel.date}</span>
+              <span className="text-xs text-[var(--text-tertiary)] font-mono">{item.date}</span>
             </div>
 
-            <ul className="space-y-1.5 text-xs text-[var(--text-secondary)]">
-              {rel.features.map((feat, idx) => (
-                <li key={idx} className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>{feat}</span>
-                </li>
-              ))}
-            </ul>
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{item.description}</p>
           </Card>
         ))}
       </div>
