@@ -7,12 +7,13 @@ services:
       - "5000:5000"
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=5000
-      - DATABASE_URL=postgresql://synkron:synkron_password_9481@postgres:5432/workforce_db?schema=public
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=super-secret-production-jwt-key-9481
-      - BIOMETRIC_MODEL_KEY=prod-resnet50-model-key-9481
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL environment variable is required}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET environment variable is required (min 32 chars)}
+      - BIOMETRIC_MODEL_KEY=${BIOMETRIC_MODEL_KEY:?BIOMETRIC_MODEL_KEY environment variable is required}
+      - KEK_SECRET=${KEK_SECRET:?KEK_SECRET environment variable is required for Envelope Encryption}
     depends_on:
       - postgres
       - redis
@@ -21,9 +22,9 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_USER: synkron
-      POSTGRES_PASSWORD: synkron_password_9481
-      POSTGRES_DB: workforce_db
+      POSTGRES_USER: ${POSTGRES_USER:-synkron}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD environment variable is required}
+      POSTGRES_DB: ${POSTGRES_DB:-workforce_db}
     ports:
       - "5432:5432"
     volumes:

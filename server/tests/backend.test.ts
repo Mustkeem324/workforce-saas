@@ -1,19 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { calculateStatutoryDeductions } from '../statutory';
 import { LoginSchema, PunchSchema, ShiftSchema, PayrollRunSchema } from '../validation';
-import { compareEmbeddings, extractEmbeddingFromBase64 } from '../faceRecognition';
 import { generateRandomLivenessChallenge, verifyLivenessChallenge } from '../liveness';
 import { evaluateFaceVerification } from '../faceVerification';
 import { 
-  MockFaceRecognitionProvider, 
+  SimulatedFaceRecognitionProvider, 
   ProductionFaceRecognitionProvider,
-  encryptBiometricVector,
-  decryptBiometricVector
+  encryptBiometricVectorDEK,
+  decryptBiometricVectorDEK
 } from '../faceProvider';
 import { hashPassword, verifyPassword, generateAccessToken, verifyAccessToken } from '../auth';
 import { hashAdminPin, verifyAdminPin, verifyKioskSignature, processKioskOfflineBatch } from '../kioskSecurity';
 
-describe('Production Hardened Backend Engine Verification', () => {
+describe('Production Hardened Phase 2 Backend Engine Verification', () => {
 
   // 1. Zod Validation Unit Tests
   describe('Zod Input Validation Schemas', () => {
@@ -43,36 +42,49 @@ describe('Production Hardened Backend Engine Verification', () => {
     });
   });
 
-  // 2. Biometric Envelope Encryption Tests
-  describe('Biometric Envelope Encryption (AES-256-GCM)', () => {
-    it('should encrypt and decrypt face vector templates cleanly without exposing raw floats', () => {
+  // 2. Real DEK/KEK Envelope Encryption Tests
+  describe('Biometric DEK/KEK Envelope Encryption (AES-256-GCM + AES-ECB DEK Wrap)', () => {
+    it('should encrypt and decrypt face vector templates using wrapped DEKs without exposing raw vector arrays', () => {
       const originalVector = [0.12, -0.45, 0.88, 0.33];
-      const encrypted = encryptBiometricVector(originalVector);
-      expect(encrypted).not.toContain('0.12');
-      expect(encrypted.split(':').length).toBe(3); // IV:Tag:Data
+      const kekSecret = 'kek-secret-key-must-be-at-least-32-chars-long-9481!';
+      
+      const envelope = encryptBiometricVectorDEK(originalVector, kekSecret);
+      expect(envelope.ciphertext).not.toContain('0.12');
+      expect(envelope.wrappedDek).toBeDefined();
+      expect(envelope.keyVersion).toBe('kek-v1-2026');
 
-      const decrypted = decryptBiometricVector(encrypted);
+      const decrypted = decryptBiometricVectorDEK(envelope, kekSecret);
       expect(decrypted).toEqual(originalVector);
+    });
+
+    it('should fail decryption if KEK secret is invalid or mismatched', () => {
+      const originalVector = [0.12, -0.45, 0.88, 0.33];
+      const kekSecret = 'kek-secret-key-must-be-at-least-32-chars-long-9481!';
+      const envelope = encryptBiometricVectorDEK(originalVector, kekSecret);
+
+      expect(() => decryptBiometricVectorDEK(envelope, 'wrong-kek-secret-key-32-chars-long-wrong')).toThrow();
     });
   });
 
-  // 3. Provider Contract Tests
-  describe('FaceRecognitionProvider Contract', () => {
-    it('should differentiate Mock and Production face recognition providers', async () => {
-      const mockProv = new MockFaceRecognitionProvider();
+  // 3. Provider Contract Tests (Simulated vs Production Labeling)
+  describe('FaceRecognitionProvider Contract & Labeling', () => {
+    it('should explicitly label SimulatedFaceRecognitionProvider and ProductionFaceRecognitionProvider', async () => {
+      const simProv = new SimulatedFaceRecognitionProvider();
       const prodProv = new ProductionFaceRecognitionProvider();
 
-      const mockVector = await mockProv.generateEmbedding(Buffer.from('sample'));
-      const sampleImageBuffer = Buffer.alloc(150, 'a');
-      const prodVector = await prodProv.generateEmbedding(sampleImageBuffer);
+      expect(simProv.isSimulated).toBe(true);
+      expect((prodProv as any).isSimulated).toBeUndefined();
 
-      expect(mockVector.length).toBe(128);
+      const simVector = await simProv.generateEmbedding(Buffer.alloc(60, 's'));
+      const prodVector = await prodProv.generateEmbedding(Buffer.alloc(150, 'a'));
+
+      expect(simVector.length).toBe(128);
       expect(prodVector.length).toBe(128);
       expect(prodProv.modelVersion).toBe('v2.4-resnet50-biometric');
     });
   });
 
-  // 4. Authentication & Cross-Tenant Isolation Tests
+  // 4. Authentication & Strict Tenant Isolation Tests (No Auth Bypass)
   describe('Authentication & Tenant Scope Isolation', () => {
     it('should securely hash and verify passwords using Scrypt', () => {
       const pass = 'SuperSecretPass123!';
