@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation, Crosshair, ZoomIn, ZoomOut, ShieldCheck, ShieldAlert, Smartphone } from 'lucide-react';
+import { Navigation, Crosshair, ZoomIn, ZoomOut, MapPin, Smartphone, ShieldCheck, ShieldAlert } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -11,8 +13,8 @@ export interface MapPinPoint {
   avatar: string;
   role: string;
   time: string;
-  xPct: number;
-  yPct: number;
+  lat: number;
+  lng: number;
   accuracyRadiusMeters: number;
   isGeofenced: boolean;
   coords: string;
@@ -26,8 +28,8 @@ const MAP_POINTS: MapPinPoint[] = [
     avatar: 'AR',
     role: 'Senior Tech Lead',
     time: '08:00 AM',
-    xPct: 48,
-    yPct: 42,
+    lat: 19.0760,
+    lng: 72.8777,
     accuracyRadiusMeters: 3.2,
     isGeofenced: true,
     coords: '19.0760° N, 72.8777° E',
@@ -39,8 +41,8 @@ const MAP_POINTS: MapPinPoint[] = [
     avatar: 'JC',
     role: 'Shift Operations Lead',
     time: '07:30 AM',
-    xPct: 52,
-    yPct: 46,
+    lat: 19.0765,
+    lng: 72.8782,
     accuracyRadiusMeters: 1.5,
     isGeofenced: true,
     coords: '19.0765° N, 72.8782° E',
@@ -52,8 +54,8 @@ const MAP_POINTS: MapPinPoint[] = [
     avatar: 'MS',
     role: 'Dispatch Coordinator',
     time: '08:30 AM',
-    xPct: 45,
-    yPct: 55,
+    lat: 19.0755,
+    lng: 72.8765,
     accuracyRadiusMeters: 4.8,
     isGeofenced: true,
     coords: '19.0755° N, 72.8765° E',
@@ -65,8 +67,8 @@ const MAP_POINTS: MapPinPoint[] = [
     avatar: 'TR',
     role: 'Logistics Specialist',
     time: '09:12 AM',
-    xPct: 78,
-    yPct: 22,
+    lat: 19.0900,
+    lng: 72.8900,
     accuracyRadiusMeters: 28.5,
     isGeofenced: false,
     coords: '19.0900° N, 72.8900° E',
@@ -77,6 +79,107 @@ const MAP_POINTS: MapPinPoint[] = [
 export const MapPunchVisualization: React.FC = () => {
   const [selectedPin, setSelectedPin] = useState<MapPinPoint | null>(MAP_POINTS[0]);
   const [showGeofenceBoundary, setShowGeofenceBoundary] = useState(true);
+
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const circleLayerRef = useRef<L.Circle | null>(null);
+  const markersRef = useRef<Map<string, L.Marker>>(new Map());
+
+  // Initialize Real Leaflet Map Instance
+  useEffect(() => {
+    if (!mapContainerRef.current || mapInstanceRef.current) return;
+
+    // Create Leaflet Map centered on Mumbai Logistics Hub
+    const map = L.map(mapContainerRef.current, {
+      center: [19.0760, 72.8777],
+      zoom: 15,
+      zoomControl: false,
+      attributionControl: false
+    });
+
+    // CartoDB Dark Matter Real Map Tile Layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd'
+    }).addTo(map);
+
+    // Facility 150m Radius Geofence Circle
+    const geofenceCircle = L.circle([19.0760, 72.8777], {
+      color: '#E05A47',
+      fillColor: '#E05A47',
+      fillOpacity: 0.12,
+      radius: 150,
+      dashArray: '6, 6',
+      weight: 2
+    }).addTo(map);
+
+    circleLayerRef.current = geofenceCircle;
+
+    // Plot Real Employee Marker Pins
+    MAP_POINTS.forEach(pt => {
+      const pinHtml = `
+        <div class="relative group cursor-pointer">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-xl border-2 transition-transform hover:scale-125 ${
+            pt.isGeofenced ? 'bg-[#E05A47] border-white' : 'bg-rose-600 border-white'
+          }">
+            ${pt.avatar}
+          </div>
+          <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-black ${
+            pt.isGeofenced ? 'bg-emerald-400' : 'bg-rose-500'
+          }"></span>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: pinHtml,
+        className: 'custom-leaflet-marker',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      const marker = L.marker([pt.lat, pt.lng], { icon: customIcon }).addTo(map);
+
+      marker.on('click', () => {
+        setSelectedPin(pt);
+        map.flyTo([pt.lat, pt.lng], 16, { duration: 0.8 });
+      });
+
+      markersRef.current.set(pt.id, marker);
+    });
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  // Update Geofence Circle visibility
+  useEffect(() => {
+    if (!mapInstanceRef.current || !circleLayerRef.current) return;
+    if (showGeofenceBoundary) {
+      circleLayerRef.current.addTo(mapInstanceRef.current);
+    } else {
+      circleLayerRef.current.remove();
+    }
+  }, [showGeofenceBoundary]);
+
+  // Pan map when selected pin changes
+  const handleSelectPin = (pt: MapPinPoint) => {
+    setSelectedPin(pt);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([pt.lat, pt.lng], 16, { duration: 0.8 });
+    }
+  };
+
+  const handleZoomIn = () => {
+    if (mapInstanceRef.current) mapInstanceRef.current.zoomIn();
+  };
+
+  const handleZoomOut = () => {
+    if (mapInstanceRef.current) mapInstanceRef.current.zoomOut();
+  };
 
   return (
     <div className="space-y-5 w-full min-w-0">
@@ -89,17 +192,17 @@ export const MapPunchVisualization: React.FC = () => {
               className="font-extrabold text-[var(--text-primary)] tracking-tight leading-snug whitespace-normal break-normal text-base md:text-lg"
               style={{ wordBreak: 'normal', overflowWrap: 'normal' }}
             >
-              Map-Based Geofence Punch Inspector
+              Real OpenStreetMap Vector Geofence Inspector
             </h2>
           </div>
-          <Badge variant="accent" className="shrink-0 whitespace-nowrap">VECTOR GEOFENCE</Badge>
+          <Badge variant="accent" className="shrink-0 whitespace-nowrap">LIVE MAP TILES</Badge>
         </div>
 
         <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
-          Plotted GPS punches with accuracy radius circles and custom avatar pins.
+          Real CartoDB dark tile map with live GPS markers, 150m geofence perimeter ring, and telemetry inspector.
         </p>
 
-        <div className="pt-1 flex items-center">
+        <div className="pt-1 flex items-center justify-between gap-3 flex-wrap">
           <Button
             variant={showGeofenceBoundary ? 'accent' : 'outline'}
             size="sm"
@@ -110,58 +213,31 @@ export const MapPunchVisualization: React.FC = () => {
           >
             {showGeofenceBoundary ? 'Geofence Perimeter: ON' : 'Geofence Perimeter: OFF'}
           </Button>
+
+          <span className="text-[11px] font-mono text-[var(--text-tertiary)]">
+            MUMBAI HUB: 19.0760° N, 72.8777° E
+          </span>
         </div>
       </div>
 
-      {/* Map Viewport & Inspector Sub-Grid
-          Layout:
-          - XL screens (>=1280px): Side-by-side grid with map minmax(0,1fr) and inspector minmax(280px, 320px)
-          - Below XL screens: Single column vertical stack
-      */}
+      {/* Map Viewport & Inspector Sub-Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] gap-6 items-start min-w-0">
-        {/* Main Vector SVG Map Canvas Container */}
-        <div className="w-full min-w-0 relative bg-[var(--ink-950)] border-2 border-[var(--border-default)] rounded-3xl h-[380px] sm:h-[460px] md:h-[500px] aspect-4/3 overflow-hidden shadow-[var(--shadow-3)] select-none">
-          {/* Map Grid Pattern / Topography Background */}
-          <div 
-            className="absolute inset-0 opacity-20 pointer-events-none"
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, rgba(224, 90, 71, 0.4) 1px, transparent 0)`,
-              backgroundSize: '24px 24px'
-            }}
-          />
+        {/* Real Interactive Leaflet Tile Map Canvas Container */}
+        <div className="w-full min-w-0 relative bg-[var(--ink-950)] border-2 border-[var(--border-default)] rounded-3xl h-[380px] sm:h-[460px] md:h-[500px] overflow-hidden shadow-[var(--shadow-3)]">
+          {/* Leaflet Map DOM Mount Node */}
+          <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-          {/* Vector Roads & Geofence Boundary Layer */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
-            {showGeofenceBoundary && (
-              <g>
-                <circle 
-                  cx="50%" 
-                  cy="48%" 
-                  r="130" 
-                  fill="rgba(224, 90, 71, 0.06)" 
-                  stroke="var(--accent-500)" 
-                  strokeWidth="2" 
-                  strokeDasharray="6 6"
-                />
-                <text x="50%" y="16%" textAnchor="middle" fill="var(--accent-400)" fontSize="10" fontFamily="sans-serif" fontWeight="bold" letterSpacing="0.08em">
-                  MUMBAI FACILITY GEOFENCE PERIMETER (150M RADIUS)
-                </text>
-              </g>
-            )}
-
-            <path d="M0 260 Q 300 240, 800 270" stroke="#1E293B" strokeWidth="12" fill="none" />
-            <path d="M400 0 Q 420 300, 440 600" stroke="#1E293B" strokeWidth="10" fill="none" />
-          </svg>
-
-          {/* Map Controls */}
-          <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
+          {/* Interactive Zoom Controls Overlay */}
+          <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
             <button 
+              onClick={handleZoomIn}
               aria-label="Zoom in map"
               className="p-2.5 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)] min-touch flex items-center justify-center"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button 
+              onClick={handleZoomOut}
               aria-label="Zoom out map"
               className="p-2.5 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)] min-touch flex items-center justify-center"
             >
@@ -169,56 +245,26 @@ export const MapPunchVisualization: React.FC = () => {
             </button>
           </div>
 
-          {/* Interactive Map Pins */}
-          {MAP_POINTS.map((pt) => {
-            const isSelected = selectedPin?.id === pt.id;
-            return (
-              <div
+          {/* Quick Select Employee Pins Bar */}
+          <div className="absolute bottom-3 left-3 right-3 z-[400] bg-[var(--ink-950)]/90 backdrop-blur-md border border-[var(--border-subtle)] p-2.5 rounded-2xl flex items-center gap-2 overflow-x-auto">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] px-2 shrink-0">
+              PUNCH LOCATIONS:
+            </span>
+            {MAP_POINTS.map(pt => (
+              <button
                 key={pt.id}
-                style={{ left: `${pt.xPct}%`, top: `${pt.yPct}%` }}
-                onClick={() => setSelectedPin(pt)}
-                className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group min-touch"
-                role="button"
-                tabIndex={0}
-                aria-label={`Select ${pt.employeeName} punch pin`}
-                onKeyDown={(e) => e.key === 'Enter' && setSelectedPin(pt)}
+                onClick={() => handleSelectPin(pt)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+                  selectedPin?.id === pt.id 
+                    ? 'bg-[var(--accent-500)] text-white shadow-sm' 
+                    : 'bg-[var(--ink-900)] text-[var(--text-secondary)] hover:text-white'
+                }`}
               >
-                {/* Accuracy Radius Circle */}
-                <div 
-                  className={`absolute rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all ${
-                    pt.isGeofenced 
-                      ? 'bg-emerald-500/15 border border-emerald-400/40' 
-                      : 'bg-rose-500/20 border border-rose-500/60 animate-ping'
-                  }`}
-                  style={{ 
-                    width: `${Math.max(36, pt.accuracyRadiusMeters * 4)}px`, 
-                    height: `${Math.max(36, pt.accuracyRadiusMeters * 4)}px`,
-                    top: '50%',
-                    left: '50%'
-                  }}
-                />
-
-                {/* Custom Avatar Pin Marker */}
-                <motion.div
-                  whileHover={{ scale: 1.2 }}
-                  animate={{ scale: isSelected ? 1.15 : 1 }}
-                  className={`
-                    relative w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-xl border-2 transition-all
-                    ${pt.isGeofenced 
-                      ? (isSelected ? 'bg-[var(--accent-500)] border-white shadow-[var(--shadow-accent-glow)]' : 'bg-[var(--ink-900)] border-[var(--accent-500)]')
-                      : 'bg-rose-600 border-white shadow-rose-900/50'}
-                  `}
-                >
-                  <span>{pt.avatar}</span>
-                  <span 
-                    className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[var(--ink-950)] ${
-                      pt.isGeofenced ? 'bg-emerald-400' : 'bg-rose-500'
-                    }`} 
-                  />
-                </motion.div>
-              </div>
-            );
-          })}
+                <span>{pt.avatar}</span>
+                <span>{pt.employeeName.split(' ')[0]}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Selected Pin Inspector Panel */}
