@@ -106,13 +106,13 @@ export const App: React.FC = () => {
     { id: 'phase8', label: 'Enterprise Multi-Location Tree', icon: <Globe className="w-4 h-4 text-emerald-400" /> },
     { id: 'phase10', label: 'Statutory Compliance & Audit Logs', icon: <History className="w-4 h-4 text-emerald-400" /> },
     { id: 'phase11', label: 'Executive Intelligence & Cohorts', icon: <TrendingUp className="w-4 h-4 text-purple-400" /> },
-    { id: 'phase9', label: 'Developer API & Integrations Marketplace', icon: <Plug className="w-4 h-4 text-sky-400" /> },
-    { id: 'blog', label: 'Blog & Editorial CMS Admin', icon: <FileText className="w-4 h-4 text-amber-400" /> },
-    { id: 'phase14', label: 'White-Label Customizer & Franchise Rollups', icon: <Building2 className="w-4 h-4 text-amber-400" /> },
+    { id: 'phase9', label: 'Developer API Marketplace', icon: <Plug className="w-4 h-4 text-sky-400" /> },
+    { id: 'blog', label: 'Editorial CMS & Blog Admin', icon: <FileText className="w-4 h-4 text-amber-400" /> },
+    { id: 'phase14', label: 'White-Label Customizer & Franchise', icon: <Building2 className="w-4 h-4 text-amber-400" /> },
     { id: 'phase13', label: 'Offline-First Engine & Latency Audit', icon: <Gauge className="w-4 h-4 text-cyan-400" /> },
-    { id: 'phase16', label: 'Security Center & GDPR Data Exporter', icon: <Lock className="w-4 h-4 text-indigo-400" /> },
-    { id: 'phase15', label: 'Accessibility & RTL Localized Engine', icon: <Globe className="w-4 h-4 text-sky-400" /> },
-    { id: 'phase17', label: 'Design Ops Changelog & Referral Loop', icon: <Gift className="w-4 h-4 text-emerald-400" /> },
+    { id: 'phase16', label: 'Security Center & Data Exporter', icon: <Lock className="w-4 h-4 text-indigo-400" /> },
+    { id: 'phase15', label: 'Accessibility & Localized Engine', icon: <Globe className="w-4 h-4 text-sky-400" /> },
+    { id: 'phase17', label: 'Design Ops & Growth Referral', icon: <Gift className="w-4 h-4 text-emerald-400" /> },
     { id: 'phase7', label: 'Product Overview & Marketing Site', icon: <Rocket className="w-4 h-4 text-orange-400" /> },
     { id: 'phase1', label: 'Admin Shell & Command Palette (Cmd+K)', icon: <Command className="w-4 h-4 text-cyan-400" /> },
     { id: 'overview', label: 'System Architecture Brief', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -125,27 +125,29 @@ export const App: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250 flex flex-col pb-16 md:pb-0">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-[var(--bg-surface-raised)]/90 backdrop-blur-md border-b border-[var(--border-subtle)] px-4 md:px-6 py-3 flex items-center justify-between shadow-xs pt-safe">
+    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250 flex flex-col pb-20 md:pb-0">
+      {/* Top Mobile & Desktop Navigation Bar */}
+      <header className="sticky top-0 z-40 bg-[var(--bg-surface-raised)]/95 backdrop-blur-md border-b border-[var(--border-subtle)] px-4 md:px-6 py-3 flex items-center justify-between shadow-xs pt-safe">
         <div className="flex items-center gap-3">
-          {/* Tablet Menu Toggle */}
+          {/* Mobile/Tablet Menu Toggle */}
           <button 
             onClick={() => setIsTabletSidebarOpen(!isTabletSidebarOpen)}
-            className="hidden sm:flex md:hidden p-2 rounded-xl border border-[var(--border-subtle)] text-[var(--text-secondary)] min-touch"
+            className="md:hidden p-2 rounded-xl border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-element-hover)] min-touch"
+            aria-label="Toggle Menu"
           >
-            {isTabletSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isTabletSidebarOpen ? <X className="w-5 h-5 text-[var(--accent-500)]" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--accent-500)] to-[var(--ink-900)] text-white flex items-center justify-center font-black text-sm shadow-[var(--shadow-accent-glow)] shrink-0">
-            WF
+          {/* Synkron AI Logo Badge */}
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--accent-500)] to-rose-600 text-white flex items-center justify-center font-black text-sm shadow-[var(--shadow-accent-glow)] shrink-0">
+            SY
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-extrabold tracking-tight text-[var(--text-primary)]">Workforce SaaS</h1>
-              <Badge variant="accent">INDIA ENTERPRISE (INR ₹)</Badge>
+              <h1 className="text-base font-black tracking-tight text-[var(--text-primary)]">Synkron AI</h1>
+              <Badge variant="accent">WORKFORCE OS</Badge>
             </div>
-            <p className="text-[10px] md:text-[11px] text-[var(--text-tertiary)] font-mono">MULTI-TENANT WORKFORCE MANAGEMENT PLATFORM</p>
+            <p className="text-[10px] md:text-[11px] text-[var(--text-tertiary)] font-mono">INDIA ENTERPRISE (INR ₹)</p>
           </div>
         </div>
 
@@ -174,15 +176,23 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col md:flex-row">
-        {/* Navigation Sidebar */}
+        {/* Responsive Drawer & Desktop Sidebar */}
         <aside className={`
-          ${isTabletSidebarOpen ? 'block' : 'hidden md:block'}
+          ${isTabletSidebarOpen ? 'block fixed inset-x-0 top-[61px] bottom-[64px] z-50 overflow-y-auto bg-[var(--bg-surface-raised)] border-b border-[var(--border-subtle)]' : 'hidden md:block'}
           w-full md:w-64 bg-[var(--bg-surface-raised)] border-r border-[var(--border-subtle)] p-4 flex flex-col justify-between shrink-0 z-30
         `}>
           <div className="space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] px-3 mb-2 block">
-              ENTERPRISE PLATFORM
-            </span>
+            <div className="flex items-center justify-between px-3 mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">
+                SYNKRON ENTERPRISE OS
+              </span>
+              {isTabletSidebarOpen && (
+                <button onClick={() => setIsTabletSidebarOpen(false)} className="md:hidden text-xs text-[var(--accent-500)] font-bold">
+                  Close Menu ✕
+                </button>
+              )}
+            </div>
+
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
@@ -208,12 +218,12 @@ export const App: React.FC = () => {
             <div className="flex items-center justify-between font-mono text-[var(--accent-500)] font-bold">
               <span className="flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                SYSTEM OPERATIONAL
+                SYNKRON OS LIVE
               </span>
               <span>100%</span>
             </div>
             <p className="text-[var(--text-tertiary)] leading-tight">
-              Express SQLite Backend & INR Currency Active.
+              Express SQLite Backend & Mobile Navigation Active.
             </p>
           </div>
         </aside>
@@ -251,7 +261,7 @@ export const App: React.FC = () => {
       {/* Mobile Bottom Navigation Tab Bar (<640px) */}
       <MobileBottomTabBar
         activeTab={activeTab}
-        onNavigate={setActiveTab}
+        onNavigate={(tab) => { setActiveTab(tab); setIsTabletSidebarOpen(false); }}
         onOpenSearch={() => setIsSearchOpen(true)}
       />
 
