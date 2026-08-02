@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@layer base {
+  /* Default Light Mode CSS Variables */
+  :root {
+    --ink-950: #06090E;
+    --ink-900: #0B0F19;
+    --ink-850: #111726;
+    
+    --accent-500: #E05A47;
+    --accent-400: #F07E6D;
+    
+    --success-bg: rgba(16, 185, 129, 0.12);
+    --success-text: #059669;
+    --success-border: rgba(16, 185, 129, 0.3);
+    --success-solid: #10B981;
+
+    --warning-bg: rgba(245, 158, 11, 0.12);
+    --warning-text: #D97706;
+    --warning-border: rgba(245, 158, 11, 0.3);
+    --warning-solid: #F59E0B;
+
+    --danger-bg: rgba(244, 63, 94, 0.12);
+    --danger-text: #E11D48;
+    --danger-border: rgba(244, 63, 94, 0.3);
+    --danger-solid: #F43F5E;
+
+    --info-bg: rgba(14, 165, 233, 0.12);
+    --info-text: #0284C7;
+    --info-border: rgba(14, 165, 233, 0.3);
+    --info-solid: #0EA5E9;
+
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Light Mode Surface Tokens */
+    --bg-canvas: #F8FAFC;
+    --bg-surface-raised: #FFFFFF;
+    --bg-surface-overlay: #FFFFFF;
+    --bg-element-hover: #F1F5F9;
+
+    --text-primary: #0B0F19;
+    --text-secondary: #475569;
+    --text-tertiary: #64748B;
+
+    --border-subtle: #E2E8F0;
+    --border-default: #CBD5E1;
+    --border-accent: rgba(224, 90, 71, 0.4);
+
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-2: 0 4px 6px -1px rgba(0,0,0,0.08);
+    --shadow-3: 0 10px 15px -3px rgba(0,0,0,0.1);
+    --shadow-4: 0 20px 25px -5px rgba(0,0,0,0.12);
+    --shadow-accent-glow: 0 0 20px rgba(224, 90, 71, 0.25);
+  }
+
+  /* Dark Mode Class Overrides (html.dark) */
+  html.dark, .dark {
+    --bg-canvas: #06090E;
+    --bg-surface-raised: #0B0F19;
+    --bg-surface-overlay: #111726;
+    --bg-element-hover: #1A2234;
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-tertiary: #64748B;
+
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-default: rgba(255, 255, 255, 0.15);
+    --border-accent: rgba(224, 90, 71, 0.4);
+
+    --success-text: #34D399;
+    --warning-text: #FBBF24;
+    --danger-text: #FB7185;
+    --info-text: #38BDF8;
+
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.5);
+    --shadow-2: 0 4px 6px -1px rgba(0,0,0,0.5);
+    --shadow-3: 0 10px 15px -3px rgba(0,0,0,0.6);
+    --shadow-4: 0 20px 25px -5px rgba(0,0,0,0.7);
+  }
+
+  /* Prevent iOS Safari font zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+}
+
+/* Mobile Touch Target & Safe Area Utility Classes */
+.min-touch {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+/* Tabular Numerics Utility */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* RTL Support */
+.dir-rtl {
+  direction: rtl;
+}
