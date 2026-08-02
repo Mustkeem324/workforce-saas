@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { calculateStatutoryDeductions } from '../statutory';
 import { LoginSchema, PunchSchema, ShiftSchema, PayrollRunSchema } from '../validation';
 import { compareEmbeddings, extractEmbeddingFromBase64 } from '../faceRecognition';
+import { generateRandomLivenessChallenge, verifyLivenessChallenge } from '../liveness';
+import { evaluateFaceVerification } from '../faceVerification';
 
 describe('Production Hardened Backend Engine Verification', () => {
 
@@ -42,9 +44,9 @@ describe('Production Hardened Backend Engine Verification', () => {
         state: 'MH'
       });
 
-      expect(result.providentFund).toBe(1800); // 12% of 15,000 cap
-      expect(result.employeeStateInsurance).toBe(0); // Gross > 21,000, ESI exempt
-      expect(result.professionalTax).toBe(200); // ₹200 PT slab
+      expect(result.providentFund).toBe(1800);
+      expect(result.employeeStateInsurance).toBe(0);
+      expect(result.professionalTax).toBe(200);
       expect(result.totalDeductions).toBe(2000);
       expect(result.netSalary).toBe(34000 - 2000);
     });
@@ -56,7 +58,7 @@ describe('Production Hardened Backend Engine Verification', () => {
         state: 'MH'
       });
 
-      expect(result.employeeStateInsurance).toBe(135); // 0.75% of 18,000 = 135
+      expect(result.employeeStateInsurance).toBe(135);
     });
   });
 
@@ -81,6 +83,66 @@ describe('Production Hardened Backend Engine Verification', () => {
       const vecB = Array(128).fill(-0.5);
       const distance = compareEmbeddings(vecA, vecB);
       expect(distance).toBeGreaterThan(0.6);
+    });
+  });
+
+  // 4. Liveness Verification & Anti-Spoofing Tests
+  describe('Liveness Anti-Spoofing Verification Engine', () => {
+    it('should generate a randomized liveness challenge prompt', () => {
+      const challenge = generateRandomLivenessChallenge();
+      expect(challenge.challengeId).toBeDefined();
+      expect(['BLINK', 'HEAD_TURN_LEFT', 'HEAD_TURN_RIGHT', 'SMILE', 'NOD']).toContain(challenge.type);
+    });
+
+    it('should pass liveness check when blink and texture tests succeed', () => {
+      const challenge = generateRandomLivenessChallenge();
+      const result = verifyLivenessChallenge(challenge, 'mock-frame', { blinkCount: 2, textureScore: 0.9 });
+      expect(result.passed).toBe(true);
+      expect(result.score).toBeGreaterThan(0.8);
+    });
+  });
+
+  // 5. Face Verification Decision Engine Tests
+  describe('Face Verification Decision Rules Engine', () => {
+    it('should approve VERIFIED status for high match score and passed liveness', () => {
+      const vec = Array(128).fill(0.1);
+      const livenessResult = {
+        passed: true,
+        score: 0.94,
+        checks: { blinkDetected: true, headMovementDetected: true, screenReplayDetected: false, multipleFacesDetected: false, textureAnalysisPassed: true }
+      };
+
+      const decision = evaluateFaceVerification({
+        queryEmbedding: vec,
+        enrolledEmbedding: vec,
+        livenessResult,
+        imageQualityScore: 0.95,
+        deviceRiskScore: 0.1,
+        locationRiskScore: 0.1
+      });
+
+      expect(decision.decision).toBe('VERIFIED');
+      expect(decision.matchScore).toBe(1.0);
+    });
+
+    it('should trigger MANUAL_REVIEW_REQUIRED when location risk is high', () => {
+      const vec = Array(128).fill(0.1);
+      const livenessResult = {
+        passed: true,
+        score: 0.94,
+        checks: { blinkDetected: true, headMovementDetected: true, screenReplayDetected: false, multipleFacesDetected: false, textureAnalysisPassed: true }
+      };
+
+      const decision = evaluateFaceVerification({
+        queryEmbedding: vec,
+        enrolledEmbedding: vec,
+        livenessResult,
+        imageQualityScore: 0.95,
+        deviceRiskScore: 0.1,
+        locationRiskScore: 0.8 // High location risk
+      });
+
+      expect(decision.decision).toBe('MANUAL_REVIEW_REQUIRED');
     });
   });
 });

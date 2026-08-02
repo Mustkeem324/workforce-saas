@@ -7,7 +7,6 @@ import {
   Layers, 
   Briefcase, 
   CheckCircle2, 
-  Download, 
   ArrowRight,
   ShieldCheck,
   Radio,
@@ -24,10 +23,10 @@ import { Button } from '../components/ui/button';
 
 export interface OverviewProps {
   onNavigateTab: (tabId: string) => void;
-  onCopyTokens: () => void;
+  onCopyTokens?: () => void;
 }
 
-export const OverviewView: React.FC<OverviewProps> = ({ onNavigateTab, onCopyTokens }) => {
+export const OverviewView: React.FC<OverviewProps> = ({ onNavigateTab }) => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Hero Section */}
@@ -52,45 +51,39 @@ export const OverviewView: React.FC<OverviewProps> = ({ onNavigateTab, onCopyTok
             <Button variant="accent" size="lg" onClick={() => onNavigateTab('phase12')} rightIcon={<ArrowRight className="w-4 h-4" />}>
               Open Employee Self-Service Hub
             </Button>
-            <Button variant="outline" size="lg" onClick={onCopyTokens} leftIcon={<Download className="w-4 h-4" />}>
-              Export CSS Tokens
-            </Button>
           </div>
         </div>
       </div>
 
-      {/* System Architecture Checklist */}
-      <Card elevation={2} className="space-y-4">
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-          <div>
-            <h3 className="text-lg font-extrabold text-[var(--text-primary)]">Synkron AI Architectural Verification</h3>
-            <p className="text-xs text-[var(--text-tertiary)]">Design system standards and multi-tenant backend engine</p>
+      {/* Grid of Design Tokens & Features */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card elevation={2} className="space-y-3 cursor-pointer hover:border-[var(--accent-500)]/50 transition-colors" onClick={() => onNavigateTab('colors')}>
+          <div className="flex items-center justify-between">
+            <Palette className="w-6 h-6 text-rose-400" />
+            <Badge variant="neutral">TOKEN</Badge>
           </div>
-          <Badge variant="success">100% CONFORMANT</Badge>
-        </div>
+          <h3 className="text-base font-extrabold text-[var(--text-primary)]">Color System & Themes</h3>
+          <p className="text-xs text-[var(--text-tertiary)]">Dual-calibrated light and dark mode palette variables with contrast ratios.</p>
+        </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-          <div className="p-3.5 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Tabular Numerics Discipline</span>
-            </div>
-            <p className="text-[var(--text-tertiary)] font-sans">
-              All currency figures, hourly rates, and attendance times enforce <code className="text-[var(--accent-500)]">font-variant-numeric: tabular-nums</code>.
-            </p>
+        <Card elevation={2} className="space-y-3 cursor-pointer hover:border-[var(--accent-500)]/50 transition-colors" onClick={() => onNavigateTab('typography')}>
+          <div className="flex items-center justify-between">
+            <Type className="w-6 h-6 text-sky-400" />
+            <Badge variant="neutral">TOKEN</Badge>
           </div>
+          <h3 className="text-base font-extrabold text-[var(--text-primary)]">Typography & Hierarchy</h3>
+          <p className="text-xs text-[var(--text-tertiary)]">Plus Jakarta Sans UI font stack paired with JetBrains Mono for financial figures.</p>
+        </Card>
 
-          <div className="p-3.5 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Express + SQLite3 Persistent Engine</span>
-            </div>
-            <p className="text-[var(--text-tertiary)] font-sans">
-              Node.js Express backend listening on port 5000 backed by WAL-journaled SQLite database.
-            </p>
+        <Card elevation={2} className="space-y-3 cursor-pointer hover:border-[var(--accent-500)]/50 transition-colors" onClick={() => onNavigateTab('spacing')}>
+          <div className="flex items-center justify-between">
+            <Grid className="w-6 h-6 text-emerald-400" />
+            <Badge variant="neutral">GRID</Badge>
           </div>
-        </div>
-      </Card>
+          <h3 className="text-base font-extrabold text-[var(--text-primary)]">Spacing & Elevation</h3>
+          <p className="text-xs text-[var(--text-tertiary)]">4px baseline grid scale paired with 4-tier dark mode shadow elevation rules.</p>
+        </Card>
+      </div>
     </div>
   );
 };

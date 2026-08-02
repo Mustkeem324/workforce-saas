@@ -8,7 +8,6 @@ import {
   Briefcase, 
   Moon, 
   Sun, 
-  Download, 
   Check, 
   Sparkles,
   LayoutDashboard,
@@ -66,7 +65,6 @@ import { Badge } from './components/ui/badge';
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('phase12');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
-  const [copiedTokens, setCopiedTokens] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isTabletSidebarOpen, setIsTabletSidebarOpen] = useState<boolean>(false);
 
@@ -80,53 +78,37 @@ export const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const handleCopyCSSVariables = () => {
-    const cssTokens = `
-:root {
-  --ink-950: #06090E;
-  --ink-900: #0B0F19;
-  --ink-850: #111726;
-  --accent-500: #E05A47;
-  --font-ui: 'Plus Jakarta Sans', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-}
-`;
-    navigator.clipboard.writeText(cssTokens.trim());
-    setCopiedTokens(true);
-    setTimeout(() => setCopiedTokens(false), 2500);
-  };
-
   const navItems = [
     { id: 'phase12', label: 'Employee Self-Service Hub', icon: <UserCheck className="w-4 h-4 text-emerald-400" /> },
-    { id: 'phase4', label: 'Guarded Payroll Engine', icon: <IndianRupee className="w-4 h-4 text-emerald-400" /> },
+    { id: 'phase2', label: 'Attendance Capture & Geofence Map', icon: <Radio className="w-4 h-4 text-[var(--accent-500)]" /> },
     { id: 'phase3', label: 'Shift Builder & Smart Roster', icon: <Calendar className="w-4 h-4 text-amber-400" /> },
-    { id: 'phase2', label: 'Attendance Capture & Geofence Map', icon: <Radio className="w-4 h-4 text-sky-400" /> },
-    { id: 'phase5', label: 'Leave, Loans & Pivot Reports', icon: <PieChart className="w-4 h-4 text-purple-400" /> },
-    { id: 'phase6', label: 'AI Co-Pilot & Anomaly Digest', icon: <Bot className="w-4 h-4 text-rose-400" /> },
-    { id: 'phase8', label: 'Enterprise Multi-Location Tree', icon: <Globe className="w-4 h-4 text-emerald-400" /> },
-    { id: 'phase10', label: 'Statutory Compliance & Audit Logs', icon: <History className="w-4 h-4 text-emerald-400" /> },
-    { id: 'phase11', label: 'Executive Intelligence & Cohorts', icon: <TrendingUp className="w-4 h-4 text-purple-400" /> },
-    { id: 'phase9', label: 'Developer API Marketplace', icon: <Plug className="w-4 h-4 text-sky-400" /> },
-    { id: 'blog', label: 'Editorial CMS & Blog Admin', icon: <FileText className="w-4 h-4 text-amber-400" /> },
+    { id: 'phase4', label: 'Guarded Payroll Engine', icon: <IndianRupee className="w-4 h-4 text-emerald-400" /> },
+    { id: 'phase1', label: 'Admin Shell & Command Palette', icon: <LayoutDashboard className="w-4 h-4 text-sky-400" /> },
+    { id: 'phase5', label: 'Leave, Loans & Pivot Reports', icon: <PieChart className="w-4 h-4 text-indigo-400" /> },
+    { id: 'phase6', label: 'AI Co-Pilot & Anomaly Digest', icon: <Bot className="w-4 h-4 text-purple-400" /> },
+    { id: 'phase8', label: 'Enterprise Multi-Location Tree', icon: <Globe className="w-4 h-4 text-blue-400" /> },
+    { id: 'phase9', label: 'Developer API Marketplace', icon: <Plug className="w-4 h-4 text-[var(--accent-500)]" /> },
+    { id: 'phase10', label: 'Statutory Compliance & Audit Logs', icon: <History className="w-4 h-4 text-teal-400" /> },
+    { id: 'phase11', label: 'Executive Intelligence & Cohorts', icon: <TrendingUp className="w-4 h-4 text-[var(--accent-500)]" /> },
+    { id: 'phase13', label: 'Offline-First Engine & Latency Audit', icon: <Gauge className="w-4 h-4 text-[var(--accent-500)]" /> },
     { id: 'phase14', label: 'White-Label Customizer & Franchise', icon: <Building2 className="w-4 h-4 text-amber-400" /> },
-    { id: 'phase13', label: 'Offline-First Engine & Latency Audit', icon: <Gauge className="w-4 h-4 text-cyan-400" /> },
-    { id: 'phase16', label: 'Security Center & Data Exporter', icon: <Lock className="w-4 h-4 text-indigo-400" /> },
-    { id: 'phase15', label: 'Accessibility & Localized Engine', icon: <Globe className="w-4 h-4 text-sky-400" /> },
-    { id: 'phase17', label: 'Design Ops & Growth Referral', icon: <Gift className="w-4 h-4 text-emerald-400" /> },
-    { id: 'phase7', label: 'Product Overview & Marketing Site', icon: <Rocket className="w-4 h-4 text-orange-400" /> },
-    { id: 'phase1', label: 'Admin Shell & Command Palette (Cmd+K)', icon: <Command className="w-4 h-4 text-cyan-400" /> },
-    { id: 'overview', label: 'System Architecture Brief', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'colors', label: 'Color Identity', icon: <Palette className="w-4 h-4" /> },
-    { id: 'typography', label: 'Tabular Typography', icon: <Type className="w-4 h-4" /> },
-    { id: 'spacing', label: '4px Grid & Elevation', icon: <Grid className="w-4 h-4" /> },
-    { id: 'motion', label: 'Motion Tokens', icon: <Zap className="w-4 h-4" /> },
-    { id: 'components', label: 'Component Library', icon: <Layers className="w-4 h-4" /> },
-    { id: 'patterns', label: 'Workforce Patterns', icon: <Briefcase className="w-4 h-4" /> },
+    { id: 'phase15', label: 'Accessibility & Localized Engine', icon: <UserCheck className="w-4 h-4 text-emerald-400" /> },
+    { id: 'phase16', label: 'Security Center & Data Exporter', icon: <Lock className="w-4 h-4 text-rose-400" /> },
+    { id: 'phase17', label: 'Design Ops Changelog & Referral Loop', icon: <Gift className="w-4 h-4 text-pink-400" /> },
+    { id: 'phase7', label: 'Product Overview & Marketing Site', icon: <Rocket className="w-4 h-4 text-[var(--accent-500)]" /> },
+    { id: 'blog', label: 'Blog & Content Hub', icon: <FileText className="w-4 h-4 text-amber-400" /> },
+    { id: 'overview', label: 'Design System Sitemap', icon: <Layers className="w-4 h-4 text-indigo-400" /> },
+    { id: 'colors', label: 'Color Tokens', icon: <Palette className="w-4 h-4 text-rose-400" /> },
+    { id: 'typography', label: 'Typography Tokens', icon: <Type className="w-4 h-4 text-sky-400" /> },
+    { id: 'spacing', label: 'Spacing & Elevation', icon: <Grid className="w-4 h-4 text-emerald-400" /> },
+    { id: 'motion', label: 'Motion Tokens', icon: <Zap className="w-4 h-4 text-amber-400" /> },
+    { id: 'components', label: 'Primitives Gallery', icon: <Briefcase className="w-4 h-4 text-purple-400" /> },
+    { id: 'patterns', label: 'Workforce Patterns', icon: <Sparkles className="w-4 h-4 text-teal-400" /> }
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250 flex flex-col pb-20 md:pb-0">
-      {/* Top Mobile & Desktop Navigation Bar */}
+    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] font-sans antialiased flex flex-col transition-colors duration-200">
+      {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-[var(--bg-surface-raised)]/95 backdrop-blur-md border-b border-[var(--border-subtle)] px-4 md:px-6 py-3 flex items-center justify-between shadow-xs pt-safe">
         <div className="flex items-center gap-3">
           {/* Mobile/Tablet Menu Toggle */}
@@ -152,16 +134,6 @@ export const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 md:gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyCSSVariables}
-            leftIcon={copiedTokens ? <Check className="w-4 h-4 text-emerald-500" /> : <Download className="w-4 h-4 text-[var(--accent-500)]" />}
-            className="hidden sm:inline-flex min-touch"
-          >
-            {copiedTokens ? 'Tokens Copied!' : 'Export Tokens'}
-          </Button>
-
           <Button
             variant="secondary"
             size="icon"
@@ -248,7 +220,7 @@ export const App: React.FC = () => {
           {activeTab === 'phase3' && <Phase3ShiftManagementView />}
           {activeTab === 'phase2' && <Phase2AttendanceView />}
           {activeTab === 'phase1' && <Phase1AdminShellView onNavigateTab={setActiveTab} />}
-          {activeTab === 'overview' && <OverviewView onNavigateTab={setActiveTab} onCopyTokens={handleCopyCSSVariables} />}
+          {activeTab === 'overview' && <OverviewView onNavigateTab={setActiveTab} />}
           {activeTab === 'colors' && <ColorTokensView />}
           {activeTab === 'typography' && <TypographyView />}
           {activeTab === 'spacing' && <SpacingElevationView />}
