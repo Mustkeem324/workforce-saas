@@ -139,7 +139,7 @@ describe('Production Hardened Backend Engine Verification', () => {
         livenessResult,
         imageQualityScore: 0.95,
         deviceRiskScore: 0.1,
-        locationRiskScore: 0.8 // High location risk
+        locationRiskScore: 0.8
       });
 
       expect(decision.decision).toBe('MANUAL_REVIEW_REQUIRED');

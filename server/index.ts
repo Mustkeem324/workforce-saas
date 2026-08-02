@@ -133,6 +133,18 @@ db.exec(`
     geofence_status TEXT CHECK(geofence_status IN ('VERIFIED', 'OUT_OF_BOUNDS'))
   );
 
+  CREATE TABLE IF NOT EXISTS visitors (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    visitor_name TEXT NOT NULL,
+    company TEXT NOT NULL,
+    host_name TEXT NOT NULL,
+    purpose TEXT NOT NULL,
+    badge_code TEXT UNIQUE NOT NULL,
+    status TEXT CHECK(status IN ('CHECKED_IN', 'CHECKED_OUT')) DEFAULT 'CHECKED_IN',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS shifts (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
@@ -186,16 +198,6 @@ db.exec(`
   );
 `);
 
-// Seed Review Queue if Empty
-const seedReview = db.prepare('SELECT count(*) as count FROM attendance_reviews').get() as { count: number };
-if (seedReview.count === 0) {
-  db.exec(`
-    INSERT INTO attendance_reviews (id, tenant_id, employee_id, employee_name, reason, risk_level, status) VALUES
-    ('rev-101', 't-01', 'emp-104', 'Taylor Reed', 'Low-light face match score below threshold (0.68)', 'MEDIUM', 'PENDING'),
-    ('rev-102', 't-01', 'emp-105', 'Morgan Smith', 'High device risk: Unrecognized browser user-agent', 'HIGH', 'PENDING');
-  `);
-}
-
 // REST API Endpoints
 
 // Health Check
@@ -204,6 +206,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     status: 'OPERATIONAL',
     currency: 'INR (₹)',
     faceRecognition: 'ACTIVE (128-d Vector Engine + Liveness Anti-Spoofing)',
+    kioskSupport: 'ENABLED (Batch Offline Sync Ready)',
     dbEngine: 'SQLite3 (better-sqlite3)',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
@@ -217,9 +220,69 @@ app.get('/metrics', (req: Request, res: Response) => {
   res.send(generatePrometheusMetrics());
 });
 
+// KIOSK BATCH SYNC & DEVICE STATUS APIS
+
+// Batch Offline Kiosk Sync
+app.post('/api/kiosk/sync', (req: Request, res: Response) => {
+  const { deviceId, batchPunches } = req.body;
+  const tenantId = (req as any).tenantId;
+
+  if (!Array.isArray(batchPunches)) {
+    res.status(400).json({ status: 'error', code: 400, message: 'batchPunches array is required.' });
+    return;
+  }
+
+  let syncedCount = 0;
+  const insert = db.prepare(`
+    INSERT INTO attendance_punches (id, tenant_id, employee_id, employee_name, timestamp, location, type, method, geofence_status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'VERIFIED')
+  `);
+
+  for (const punch of batchPunches) {
+    const punchId = punch.id || `pn-kiosk-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+    insert.run(punchId, tenantId, punch.employeeId || 'emp-101', punch.employeeName || 'Kiosk User', punch.timestamp || new Date().toISOString(), punch.location || 'Kiosk Location', punch.type || 'IN', punch.method || 'face');
+    syncedCount++;
+  }
+
+  res.status(201).json({ status: 'success', deviceId, syncedCount });
+});
+
+// Device Dashboard Status
+app.get('/api/devices/status', (req: Request, res: Response) => {
+  res.json({
+    status: 'success',
+    data: [
+      { deviceId: 'KIOSK-MUM-01', location: 'Mumbai Hub', cameraStatus: 'ONLINE', storageUsage: '14%', offlineQueueCount: 0, lastHeartbeat: new Date().toISOString() },
+      { deviceId: 'KIOSK-DEL-02', location: 'Delhi Facility', cameraStatus: 'ONLINE', storageUsage: '22%', offlineQueueCount: 0, lastHeartbeat: new Date().toISOString() }
+    ]
+  });
+});
+
+// VISITOR & CONTRACTOR APIS
+
+app.get('/api/visitors/active', (req: Request, res: Response) => {
+  const tenantId = (req as any).tenantId;
+  const activeVisitors = db.prepare('SELECT * FROM visitors WHERE tenant_id = ? AND status = "CHECKED_IN"').all(tenantId);
+  res.json({ status: 'success', count: activeVisitors.length, data: activeVisitors });
+});
+
+app.post('/api/visitors/register', (req: Request, res: Response) => {
+  const { visitorName, company, hostName, purpose } = req.body;
+  const tenantId = (req as any).tenantId;
+
+  const visitorId = `vis-${Date.now()}`;
+  const badgeCode = `VIS-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
+
+  db.prepare(`
+    INSERT INTO visitors (id, tenant_id, visitor_name, company, host_name, purpose, badge_code, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'CHECKED_IN')
+  `).run(visitorId, tenantId, visitorName, company || 'External', hostName || 'Alex Rivera', purpose || 'Site Visit', badgeCode);
+
+  res.status(201).json({ status: 'success', data: { visitorId, badgeCode, visitorName, company, hostName } });
+});
+
 // ADVANCED FACE ATTENDANCE SESSION & LIVENESS APIS
 
-// 1. Start Face Attendance Session (Short-lived Nonce Token Generation)
 app.post('/api/attendance/face/session', (req: Request, res: Response) => {
   const { employeeId } = req.body;
   const tenantId = (req as any).tenantId;
@@ -228,7 +291,7 @@ app.post('/api/attendance/face/session', (req: Request, res: Response) => {
   const sessionToken = `stok-${Math.random().toString(36).substr(2, 12)}`;
   const nonce = `nonce-${Math.random().toString(36).substr(2, 12)}`;
   const challenge = generateRandomLivenessChallenge();
-  const expiresAt = new Date(Date.now() + 60 * 1000).toISOString(); // 60 sec TTL
+  const expiresAt = new Date(Date.now() + 60 * 1000).toISOString();
 
   const insert = db.prepare(`
     INSERT INTO face_attendance_sessions (id, tenant_id, user_id, session_token, nonce, challenge_json, expires_at)
@@ -242,7 +305,6 @@ app.post('/api/attendance/face/session', (req: Request, res: Response) => {
   });
 });
 
-// 2. Perform Liveness Anti-Spoofing Challenge Verification
 app.post('/api/attendance/face/liveness', (req: Request, res: Response) => {
   const { sessionToken, responseFrameBase64, telemetry } = req.body;
   const tenantId = (req as any).tenantId;
@@ -259,7 +321,6 @@ app.post('/api/attendance/face/liveness', (req: Request, res: Response) => {
   res.json({ status: 'success', data: livenessResult });
 });
 
-// 3. Complete Face Verification & Attendance Punch
 app.post('/api/attendance/face/verify', async (req: Request, res: Response) => {
   const { sessionToken, imageBase64, punchType, locationId } = req.body;
   const tenantId = (req as any).tenantId;
@@ -270,7 +331,6 @@ app.post('/api/attendance/face/verify', async (req: Request, res: Response) => {
     return;
   }
 
-  // Invalidate session (One-time Nonce Replay Protection)
   db.prepare('UPDATE face_attendance_sessions SET status = "VERIFIED" WHERE id = ?').run(session.id);
 
   const queryEmbedding = await extractEmbeddingFromBase64(imageBase64);
@@ -278,7 +338,6 @@ app.post('/api/attendance/face/verify', async (req: Request, res: Response) => {
 
   let enrolledEmbedding: number[];
   if (!enrolled) {
-    // Default reference vector if employee is enrolling on the fly
     enrolledEmbedding = queryEmbedding;
   } else {
     enrolledEmbedding = JSON.parse(enrolled.embedding);
@@ -311,7 +370,6 @@ app.post('/api/attendance/face/verify', async (req: Request, res: Response) => {
     return;
   }
 
-  // Create Verified Attendance Punch
   const punchId = `pn-${Date.now()}`;
   const now = new Date().toISOString();
   db.prepare(`
@@ -573,7 +631,7 @@ const clients = new Set<WebSocket>();
 
 wss.on('connection', (ws: WebSocket) => {
   clients.add(ws);
-  ws.send(JSON.stringify({ event: 'CONNECTED', message: 'Synkron AI Production Hardened Backend Active (Liveness & Session Anti-Spoofing Ready)' }));
+  ws.send(JSON.stringify({ event: 'CONNECTED', message: 'Synkron AI Production Hardened Backend Active (Kiosk Sync & Visitors Active)' }));
 
   ws.on('close', () => clients.delete(ws));
 });
@@ -591,6 +649,6 @@ export { app, server, db };
 
 if (process.env.NODE_ENV !== 'test') {
   server.listen(PORT, () => {
-    console.log(`⚡ Synkron AI Production Hardened Backend listening on port ${PORT} (Liveness Engine Active)`);
+    console.log(`⚡ Synkron AI Production Hardened Backend listening on port ${PORT} (Kiosk & Visitor Engine Active)`);
   });
 }
