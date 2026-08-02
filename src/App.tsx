@@ -110,36 +110,36 @@ export const App: React.FC = () => {
     <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] font-sans antialiased flex flex-col transition-colors duration-200">
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-[var(--bg-surface-raised)]/95 backdrop-blur-md border-b border-[var(--border-subtle)] px-4 md:px-6 py-3 flex items-center justify-between shadow-xs pt-safe">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Mobile/Tablet Menu Toggle */}
           <button 
             onClick={() => setIsTabletSidebarOpen(!isTabletSidebarOpen)}
-            className="md:hidden p-2 rounded-xl border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-element-hover)] min-touch"
+            className="md:hidden p-2 rounded-xl border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-element-hover)] min-touch shrink-0"
             aria-label="Toggle Menu"
           >
             {isTabletSidebarOpen ? <X className="w-5 h-5 text-[var(--accent-500)]" /> : <Menu className="w-5 h-5" />}
           </button>
 
           {/* Synkron AI Logo Badge */}
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--accent-500)] to-rose-600 text-white flex items-center justify-center font-black text-sm shadow-[var(--shadow-accent-glow)] shrink-0">
+          <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-gradient-to-br from-[var(--accent-500)] to-rose-600 text-white flex items-center justify-center font-black text-xs md:text-sm shadow-[var(--shadow-accent-glow)] shrink-0">
             SY
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-black tracking-tight text-[var(--text-primary)]">Synkron AI</h1>
-              <Badge variant="accent">WORKFORCE OS</Badge>
+              <h1 className="text-sm md:text-base font-black tracking-tight text-[var(--text-primary)]">Synkron AI</h1>
+              <Badge variant="accent" className="hidden sm:inline-flex">WORKFORCE OS</Badge>
             </div>
-            <p className="text-[10px] md:text-[11px] text-[var(--text-tertiary)] font-mono">INDIA ENTERPRISE (INR ₹)</p>
+            <p className="hidden md:block text-[10px] text-[var(--text-tertiary)] font-mono">INDIA ENTERPRISE (INR ₹)</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2">
           <Button
             variant="secondary"
             size="icon"
             onClick={() => setIsDarkMode(!isDarkMode)}
             aria-label="Toggle Theme"
-            className="min-touch"
+            className="min-touch shrink-0"
           >
             {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
           </Button>
