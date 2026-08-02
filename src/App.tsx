@@ -59,6 +59,7 @@ import { Phase17GrowthOpsView } from './views/Phase17GrowthOpsView';
 import { BlogCmsAdminView } from './views/BlogCmsAdminView';
 import { MobileBottomTabBar } from './components/mobile/MobileBottomTabBar';
 import { CommandPaletteModal } from './components/phase1/CommandPaletteModal';
+import { SynkronLogo } from './components/ui/SynkronLogo';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
 
@@ -120,10 +121,8 @@ export const App: React.FC = () => {
             {isTabletSidebarOpen ? <X className="w-5 h-5 text-[var(--accent-500)]" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Synkron AI Logo Badge */}
-          <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-gradient-to-br from-[var(--accent-500)] to-rose-600 text-white flex items-center justify-center font-black text-xs md:text-sm shadow-[var(--shadow-accent-glow)] shrink-0">
-            SY
-          </div>
+          {/* Synkron AI Vector Logo */}
+          <SynkronLogo size="md" />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm md:text-base font-black tracking-tight text-[var(--text-primary)]">Synkron AI</h1>
