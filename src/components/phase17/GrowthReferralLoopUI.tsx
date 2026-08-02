@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { Gift, Copy, Check, Users, Sparkles, Send } from 'lucide-react';
+import { Gift, Copy, Check, Users, IndianRupee, Sparkles, ArrowRight } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 
 export const GrowthReferralLoopUI: React.FC = () => {
-  const [copiedLink, setCopiedLink] = useState(false);
-  const referralLink = 'https://workforce-saas.com/invite?ref=apex_logistics_9481';
+  const [copied, setCopied] = useState(false);
+  const referralLink = 'https://workforcesaas.in/invite/ref-apex-9481';
 
-  const handleCopyLink = () => {
+  const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   return (
@@ -22,40 +21,43 @@ export const GrowthReferralLoopUI: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <Gift className="w-5 h-5 text-[var(--accent-500)]" />
-            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">PLG Referral & Team Invite Growth Loop</h2>
-            <Badge variant="accent">VIRAL GROWTH ENGINE</Badge>
+            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">PLG Team Invitation & Referral Credit Engine</h2>
+            <Badge variant="accent font-mono">INR ₹ REWARD CREDIT</Badge>
           </div>
           <p className="text-xs text-[var(--text-tertiary)] mt-1">
-            Invite partner facilities and earn $150 payroll credit per active tenant onboarding.
+            Invite peer organizations to Workforce SaaS and earn ₹10,000 in payroll processing credits for every active referral.
           </p>
         </div>
       </div>
 
-      {/* Referral Link & Incentive Box */}
-      <Card elevation={2} className="p-8 max-w-xl mx-auto space-y-6 border-2 border-[var(--border-accent)]/40 text-center">
+      {/* Referral Card */}
+      <Card elevation={2} className="p-8 max-w-2xl mx-auto space-y-6 border-2 border-[var(--accent-500)]/40 text-center">
+        <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto shadow-lg">
+          <IndianRupee className="w-8 h-8" />
+        </div>
+
         <div className="space-y-2">
-          <Badge variant="neutral font-mono">$150 PAYROLL CREDIT PER REFERRAL</Badge>
-          <h3 className="text-lg font-extrabold text-[var(--text-primary)]">
-            Invite Partner Facilities to Workforce SaaS
-          </h3>
-          <p className="text-xs text-[var(--text-tertiary)]">
-            Share your exclusive referral link. Your partner gets 30 days free, and you get $150 credit on your next payroll run.
+          <h3 className="text-2xl font-black text-[var(--text-primary)]">Give ₹10,000, Get ₹10,000</h3>
+          <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto">
+            When another business signs up using your link, both organizations receive a <strong>₹10,000 credit</strong> credited directly to your monthly subscription invoice.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs">
-          <Input
-            value={referralLink}
+        {/* Copy Link Input */}
+        <div className="flex items-center gap-2 p-2 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-default)] font-mono text-xs max-w-md mx-auto">
+          <input
+            type="text"
             readOnly
-            className="flex-1 text-xs"
+            value={referralLink}
+            className="flex-1 bg-transparent px-2 text-[var(--text-primary)] focus:outline-none"
           />
           <Button
             variant="accent"
             size="sm"
-            onClick={handleCopyLink}
-            leftIcon={copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            onClick={handleCopy}
+            leftIcon={copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           >
-            {copiedLink ? 'Copied Link!' : 'Copy Link'}
+            {copied ? 'Copied Link!' : 'Copy Link'}
           </Button>
         </div>
       </Card>

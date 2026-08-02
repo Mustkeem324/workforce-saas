@@ -6,7 +6,7 @@ import {
   ShieldAlert, 
   ArrowRight, 
   ArrowLeft, 
-  DollarSign, 
+  IndianRupee, 
   Sparkles, 
   RotateCw, 
   Download, 
@@ -40,9 +40,9 @@ const INITIAL_ANOMALIES: AIAnomaly[] = [
     avatar: 'TR',
     severity: 'High',
     title: 'Unexpected Wage Spike (+84.2%)',
-    description: 'Paycheck increased from $1,118.00 to $2,058.00 due to 18.0 unapproved overtime hours.',
-    currentPay: '$2,058.00',
-    previousPay: '$1,118.00',
+    description: 'Paycheck increased from ₹11,180.00 to ₹20,580.00 due to 18.0 unapproved overtime hours.',
+    currentPay: '₹20,580.00',
+    previousPay: '₹11,180.00',
     deltaPercent: '+84.2%'
   },
   {
@@ -51,9 +51,9 @@ const INITIAL_ANOMALIES: AIAnomaly[] = [
     avatar: 'JC',
     severity: 'Medium',
     title: 'Consecutive Overtime Shift (+32.0%)',
-    description: 'Gross pay increased from $1,516.00 to $2,002.00 after 3 weekend emergency calls.',
-    currentPay: '$2,002.00',
-    previousPay: '$1,516.00',
+    description: 'Gross pay increased from ₹15,160.00 to ₹20,020.00 after 3 weekend emergency calls.',
+    currentPay: '₹20,020.00',
+    previousPay: '₹15,160.00',
     deltaPercent: '+32.0%'
   },
   {
@@ -62,9 +62,9 @@ const INITIAL_ANOMALIES: AIAnomaly[] = [
     avatar: 'ER',
     severity: 'Low',
     title: 'Base Rate Adjustment (+4.5%)',
-    description: 'Annual merit increase ($42.00/hr -> $43.89/hr) reflected in current period.',
-    currentPay: '$1,755.60',
-    previousPay: '$1,680.00',
+    description: 'Annual merit increase (₹420.00/hr -> ₹438.90/hr) reflected in current period.',
+    currentPay: '₹17,556.00',
+    previousPay: '₹16,800.00',
     deltaPercent: '+4.5%'
   }
 ];
@@ -104,7 +104,7 @@ export const PayrollRunWizard: React.FC = () => {
           const next = prev + 10;
           if (next < 30) setProcessingBatchName('Batch 1/4: Direct Deposit Electronic Transfers...');
           else if (next < 60) setProcessingBatchName('Batch 2/4: Federal & State Tax Withholding Sync...');
-          else if (next < 90) setProcessingBatchName('Batch 3/4: Health Insurance & 401(k) Remittance...');
+          else if (next < 90) setProcessingBatchName('Batch 3/4: Health Insurance & PF/ESI Remittance...');
           else setProcessingBatchName('Batch 4/4: Bank Clearinghouse Confirmation...');
 
           return next;
@@ -124,7 +124,7 @@ export const PayrollRunWizard: React.FC = () => {
             <div className="flex items-center gap-2">
               <Lock className="w-5 h-5 text-[var(--accent-500)]" />
               <h2 className="text-lg font-extrabold text-[var(--text-primary)]">Guarded Payroll Run Pipeline</h2>
-              <Badge variant="accent">HIGH-STAKES MONETARY DISBURSAL</Badge>
+              <Badge variant="accent">HIGH-STAKES MONETARY DISBURSAL (INR ₹)</Badge>
             </div>
             <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
               Multi-step authorization flow with AI anomaly flags and live batch processing.
@@ -132,7 +132,7 @@ export const PayrollRunWizard: React.FC = () => {
           </div>
 
           <div className="text-xs font-mono text-[var(--text-secondary)]">
-            TOTAL PAYOUT: <span className="font-bold tabular-nums text-emerald-400 text-sm">$142,736.40</span>
+            TOTAL PAYOUT: <span className="font-bold tabular-nums text-emerald-400 text-sm">₹1,42,736.40</span>
           </div>
         </div>
 
@@ -171,25 +171,25 @@ export const PayrollRunWizard: React.FC = () => {
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
             <div>
               <h3 className="text-base font-bold text-[var(--text-primary)]">Step 1 — Review Aggregate Payroll Batch</h3>
-              <p className="text-xs text-[var(--text-tertiary)]">Pay period: July 20, 2026 – August 2, 2026 (Bi-Weekly)</p>
+              <p className="text-xs text-[var(--text-tertiary)] font-mono">July 20, 2026 – August 2, 2026 (Bi-Weekly)</p>
             </div>
-            <Badge variant="neutral">184 ACTIVE EMPLOYEES</Badge>
+            <Badge variant="neutral font-mono">184 ACTIVE EMPLOYEES</Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono tabular-nums">
             <div className="p-4 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] space-y-1">
               <span className="text-xs text-[var(--text-tertiary)] font-sans font-semibold">TOTAL GROSS WAGES</span>
-              <div className="text-2xl font-extrabold text-[var(--text-primary)]">$178,420.50</div>
+              <div className="text-2xl font-extrabold text-[var(--text-primary)]">₹1,78,420.50</div>
             </div>
 
             <div className="p-4 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] space-y-1">
               <span className="text-xs text-[var(--text-tertiary)] font-sans font-semibold">ESTIMATED TAX WITHHOLDINGS</span>
-              <div className="text-2xl font-extrabold text-[var(--danger-text)]">-$35,684.10</div>
+              <div className="text-2xl font-extrabold text-[var(--danger-text)]">-₹35,684.10</div>
             </div>
 
             <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1">
               <span className="text-xs text-emerald-400 font-sans font-semibold">NET DISBURSAL AMOUNT</span>
-              <div className="text-2xl font-extrabold text-emerald-400">$142,736.40</div>
+              <div className="text-2xl font-extrabold text-emerald-400">₹1,42,736.40</div>
             </div>
           </div>
 
@@ -323,7 +323,7 @@ export const PayrollRunWizard: React.FC = () => {
             </div>
             <h3 className="text-lg font-extrabold text-[var(--text-primary)]">Step 3 — High-Stakes Authorization</h3>
             <p className="text-xs text-[var(--text-tertiary)]">
-              This action will initiate irreversible electronic funds transfer ($142,736.40) to 184 employee accounts.
+              This action will initiate irreversible electronic funds transfer (₹1,42,736.40) to 184 employee accounts.
             </p>
           </div>
 
@@ -334,7 +334,7 @@ export const PayrollRunWizard: React.FC = () => {
             </div>
             <div className="flex justify-between border-t border-[var(--border-subtle)] pt-1.5">
               <span className="text-[var(--text-tertiary)] font-sans">Net Disbursal Amount:</span>
-              <span className="font-bold text-emerald-400 text-sm">$142,736.40</span>
+              <span className="font-bold text-emerald-400 text-sm">₹1,42,736.40</span>
             </div>
             <div className="flex justify-between border-t border-[var(--border-subtle)] pt-1.5">
               <span className="text-[var(--text-tertiary)] font-sans">Audit Signature:</span>
@@ -412,7 +412,7 @@ export const PayrollRunWizard: React.FC = () => {
           <div className="bg-[var(--bg-canvas)] p-4 rounded-xl border border-[var(--border-subtle)] text-xs text-left font-mono space-y-2">
             <div className="flex justify-between">
               <span className="text-[var(--text-tertiary)] font-sans">Total Disbursed:</span>
-              <span className="font-bold text-emerald-400 text-sm">$142,736.40</span>
+              <span className="font-bold text-emerald-400 text-sm">₹1,42,736.40</span>
             </div>
             <div className="flex justify-between border-t border-[var(--border-subtle)] pt-1.5">
               <span className="text-[var(--text-tertiary)] font-sans">Execution Timestamp:</span>

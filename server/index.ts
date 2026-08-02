@@ -72,7 +72,7 @@ db.exec(`
     total_net REAL NOT NULL,
     total_deductions REAL NOT NULL,
     employee_count INTEGER NOT NULL,
-    currency TEXT DEFAULT 'USD',
+    currency TEXT DEFAULT 'INR',
     cycle TEXT NOT NULL,
     ai_anomalies_count INTEGER DEFAULT 0,
     disbursal_status TEXT CHECK(disbursal_status IN ('DRAFT', 'VALIDATED', 'FINALIZED')),
@@ -107,20 +107,20 @@ db.exec(`
 const seedTenant = db.prepare('SELECT count(*) as count FROM tenants').get() as { count: number };
 if (seedTenant.count === 0) {
   db.exec(`
-    INSERT INTO tenants (id, name, slug) VALUES ('t-01', 'Apex Logistics Fleet', 'apex-logistics');
+    INSERT INTO tenants (id, name, slug) VALUES ('t-01', 'Apex Logistics Fleet India', 'apex-logistics-india');
 
     INSERT INTO attendance_punches (id, tenant_id, employee_id, employee_name, timestamp, location, type, geofence_status) VALUES
-    ('pn-1', 't-01', 'emp-101', 'Alex Rivera', datetime('now'), 'Austin Distribution Hub', 'IN', 'VERIFIED'),
-    ('pn-2', 't-01', 'emp-102', 'Jordan Chen', datetime('now'), 'Austin Distribution Hub', 'IN', 'VERIFIED');
+    ('pn-1', 't-01', 'emp-101', 'Alex Rivera', datetime('now'), 'Mumbai Logistics Hub', 'IN', 'VERIFIED'),
+    ('pn-2', 't-01', 'emp-102', 'Jordan Chen', datetime('now'), 'Mumbai Logistics Hub', 'IN', 'VERIFIED');
 
     INSERT INTO payroll_runs (id, tenant_id, disbursal_id, total_gross, total_net, total_deductions, employee_count, currency, cycle, ai_anomalies_count, disbursal_status) VALUES
-    ('pay-1', 't-01', 'PAY-2026-0802-9481', 142736.40, 104250.00, 38486.40, 184, 'USD', 'July 16 - July 31, 2026', 0, 'FINALIZED');
+    ('pay-1', 't-01', 'PAY-2026-0802-9481', 178420.50, 142736.40, 35684.10, 184, 'INR', 'July 20 - August 02, 2026', 0, 'FINALIZED');
 
     INSERT INTO audit_logs (id, tenant_id, actor, action, target, diff_before, diff_after) VALUES
     ('aud-1', 't-01', 'Alex Rivera (Admin)', 'PAYROLL_FINALIZED', 'PAY-2026-0802-9481', '{"status":"DRAFT"}', '{"status":"FINALIZED"}');
 
     INSERT INTO blog_posts (id, title, slug, category, summary, content, status, author, published_at) VALUES
-    ('post-1', 'Building an AI-Native Workforce SaaS: 17-Phase Architecture', 'ai-native-workforce-saas-architecture', 'Workforce Management', 'A deep dive into designing a zero-lag attendance and payroll platform for multi-location enterprises.', 'Full retrospective blueprint detailing design-first constraints, guarded payroll flows, and offline-first IndexedDB sync.', 'Published', 'Alex Rivera (VP Engineering)', '2026-08-02'),
+    ('post-1', 'Building an AI-Native Workforce SaaS for India Enterprise', 'ai-native-workforce-saas-architecture', 'Workforce Management', 'A deep dive into designing a zero-lag attendance and payroll platform for multi-location enterprises in India.', 'Full retrospective blueprint detailing design-first constraints, guarded payroll flows, and offline-first IndexedDB sync.', 'Published', 'Alex Rivera (VP Engineering)', '2026-08-02'),
     ('post-2', 'Why We Enforced Tabular Numerics for Payroll UI', 'tabular-numerics-payroll-design', 'Engineering', 'Preventing number jiggling in high-stakes financial tables using JetBrains Mono and font-variant-numeric.', 'Detailed font discipline guidelines for monetary values, hourly rates, and payroll ledgers.', 'Published', 'Sarah Chen (Lead Product Designer)', '2026-07-28');
   `);
 }
@@ -131,10 +131,11 @@ if (seedTenant.count === 0) {
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'OPERATIONAL',
+    currency: 'INR (₹)',
     dbEngine: 'SQLite3 (better-sqlite3)',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
-    version: 'v2.8.0-enterprise'
+    version: 'v2.8.0-enterprise-inr'
   });
 });
 
@@ -153,9 +154,9 @@ app.post('/api/v1/attendance/punch', (req: Request, res: Response) => {
     INSERT INTO attendance_punches (id, tenant_id, employee_id, employee_name, timestamp, location, type, geofence_status)
     VALUES (?, 't-01', ?, ?, ?, ?, ?, 'VERIFIED')
   `);
-  insert.run(punchId, employeeId || 'emp-9481', employeeName || 'Alex Rivera', now, location || 'Austin Distribution Hub', type || 'IN');
+  insert.run(punchId, employeeId || 'emp-9481', employeeName || 'Alex Rivera', now, location || 'Mumbai Logistics Hub', type || 'IN');
 
-  const newPunch = { id: punchId, tenant_id: 't-01', employee_id: employeeId || 'emp-9481', employee_name: employeeName || 'Alex Rivera', timestamp: now, location: location || 'Austin Distribution Hub', type: type || 'IN', geofence_status: 'VERIFIED' };
+  const newPunch = { id: punchId, tenant_id: 't-01', employee_id: employeeId || 'emp-9481', employee_name: employeeName || 'Alex Rivera', timestamp: now, location: location || 'Mumbai Logistics Hub', type: type || 'IN', geofence_status: 'VERIFIED' };
 
   broadcastWebSocket({ event: 'PUNCH_CREATED', data: newPunch });
 
@@ -204,7 +205,7 @@ const clients = new Set<WebSocket>();
 
 wss.on('connection', (ws: WebSocket) => {
   clients.add(ws);
-  ws.send(JSON.stringify({ event: 'CONNECTED', message: 'Workforce SQLite Realtime Engine Active' }));
+  ws.send(JSON.stringify({ event: 'CONNECTED', message: 'Workforce SQLite Realtime Engine Active (INR Currency)' }));
 
   ws.on('close', () => clients.delete(ws));
 });
@@ -219,5 +220,5 @@ function broadcastWebSocket(payload: object) {
 }
 
 server.listen(PORT, () => {
-  console.log(`⚡ Workforce SaaS Enterprise SQLite Backend listening on port ${PORT}`);
+  console.log(`⚡ Workforce SaaS Enterprise SQLite Backend listening on port ${PORT} (INR ₹ Edition)`);
 });

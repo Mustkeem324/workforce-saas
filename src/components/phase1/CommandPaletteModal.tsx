@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Command, ArrowRight, LayoutDashboard, Radio, Calendar, DollarSign, PieChart, Bot, MapPin, Users, Plus, ShieldCheck, X, FileText, Globe, Lock, Building2, Gauge } from 'lucide-react';
+import { Search, Command, ArrowRight, LayoutDashboard, Radio, Calendar, IndianRupee, PieChart, Bot, MapPin, Users, Plus, ShieldCheck, X, FileText, Globe, Lock, Building2, Gauge } from 'lucide-react';
 import { Badge } from '../ui/badge';
 
 export interface CommandItem {
@@ -41,27 +41,27 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   }, [isOpen, onClose]);
 
   const items: CommandItem[] = [
+    { id: 'nav-p12', category: 'Navigation', title: 'Go to Employee Self-Service Mobile Hub', subtitle: 'Personal home dashboard & payslip carousel', action: () => { onNavigate('phase12'); onClose(); } },
+    { id: 'nav-p4', category: 'Navigation', title: 'Go to Guarded Payroll Engine', subtitle: 'Disbursal wizard & Indian Rupee payslip studio', action: () => { onNavigate('phase4'); onClose(); } },
+    { id: 'nav-p3', category: 'Navigation', title: 'Go to Shift Builder & Smart Roster', subtitle: 'Drag-and-drop calendar & conflict detection', action: () => { onNavigate('phase3'); onClose(); } },
+    { id: 'nav-p2', category: 'Navigation', title: 'Go to Attendance Capture & Geofence Map', subtitle: 'Live stream & geofence vector map', action: () => { onNavigate('phase2'); onClose(); } },
+    { id: 'nav-p5', category: 'Navigation', title: 'Go to Leave, Loans & Pivot Reports', subtitle: 'Team heatmap & Metabase report builder', action: () => { onNavigate('phase5'); onClose(); } },
+    { id: 'nav-p6', category: 'Navigation', title: 'Go to AI Co-Pilot & Anomaly Digest', subtitle: 'Docked assistant & proactive anomaly digest', action: () => { onNavigate('phase6'); onClose(); } },
+    { id: 'nav-p8', category: 'Navigation', title: 'Go to Enterprise Multi-Location Tree', subtitle: '50+ location hierarchy tree & RBAC matrix', action: () => { onNavigate('phase8'); onClose(); } },
+    { id: 'nav-p10', category: 'Navigation', title: 'Go to Statutory Compliance & Audit Logs', subtitle: 'Immutable audit log & statutory compliance', action: () => { onNavigate('phase10'); onClose(); } },
+    { id: 'nav-p11', category: 'Navigation', title: 'Go to Executive Intelligence & Cohorts', subtitle: 'Single-screen CFO summary & retention cohorts', action: () => { onNavigate('phase11'); onClose(); } },
+    { id: 'nav-p9', category: 'Navigation', title: 'Go to Developer API & Integrations Marketplace', subtitle: 'Connector marketplace & Stripe-style API explorer', action: () => { onNavigate('phase9'); onClose(); } },
     { id: 'nav-blog', category: 'Navigation', title: 'Go to Blog & Editorial CMS Admin', subtitle: 'Article management, categories & publishing', action: () => { onNavigate('blog'); onClose(); } },
-    { id: 'nav-p17', category: 'Navigation', title: 'Go to Phase 17 — Continuous Design Ops & Growth', subtitle: 'Release notes changelog & PLG referral loop', action: () => { onNavigate('phase17'); onClose(); } },
-    { id: 'nav-p16', category: 'Navigation', title: 'Go to Phase 16 — Trust, Security & Data Export', subtitle: 'SAML/2FA security center & GDPR ZIP exporter', action: () => { onNavigate('phase16'); onClose(); } },
-    { id: 'nav-p15', category: 'Navigation', title: 'Go to Phase 15 — Accessibility & RTL i18n', subtitle: 'WCAG 2.1 AA audit & RTL layout mirroring', action: () => { onNavigate('phase15'); onClose(); } },
-    { id: 'nav-p14', category: 'Navigation', title: 'Go to Phase 14 — White-Label & Franchise', subtitle: 'Live theme customizer & franchise rollups', action: () => { onNavigate('phase14'); onClose(); } },
-    { id: 'nav-p13', category: 'Navigation', title: 'Go to Phase 13 — Performance & Offline Engine', subtitle: 'IndexedDB sync banner & conflict resolution', action: () => { onNavigate('phase13'); onClose(); } },
-    { id: 'nav-p12', category: 'Navigation', title: 'Go to Phase 12 — Employee Self-Service Hub', subtitle: 'Personal home dashboard & payslip carousel', action: () => { onNavigate('phase12'); onClose(); } },
-    { id: 'nav-p11', category: 'Navigation', title: 'Go to Phase 11 — Advanced Intelligence Suite', subtitle: 'Single-screen CFO summary & retention cohorts', action: () => { onNavigate('phase11'); onClose(); } },
-    { id: 'nav-p10', category: 'Navigation', title: 'Go to Phase 10 — Compliance & Audit Logs', subtitle: 'Immutable audit log & statutory compliance', action: () => { onNavigate('phase10'); onClose(); } },
-    { id: 'nav-p9', category: 'Navigation', title: 'Go to Phase 9 — Developer API & Integrations', subtitle: 'Connector marketplace & Stripe-style API explorer', action: () => { onNavigate('phase9'); onClose(); } },
-    { id: 'nav-p8', category: 'Navigation', title: 'Go to Phase 8 — Enterprise Multi-Location', subtitle: '50+ location hierarchy tree & RBAC matrix', action: () => { onNavigate('phase8'); onClose(); } },
-    { id: 'nav-p7', category: 'Navigation', title: 'Go to Phase 7 — Marketing Site & SEO', subtitle: 'Expressive hero & live interactive product demo', action: () => { onNavigate('phase7'); onClose(); } },
-    { id: 'nav-p6', category: 'Navigation', title: 'Go to Phase 6 — AI Layer & Co-Pilot', subtitle: 'Docked assistant & proactive anomaly digest', action: () => { onNavigate('phase6'); onClose(); } },
-    { id: 'nav-p5', category: 'Navigation', title: 'Go to Phase 5 — Leave, Loans & Reports', subtitle: 'Team heatmap & Metabase report builder', action: () => { onNavigate('phase5'); onClose(); } },
-    { id: 'nav-p4', category: 'Navigation', title: 'Go to Phase 4 — Payroll Engine', subtitle: 'Guarded disbursal wizard & payslip studio', action: () => { onNavigate('phase4'); onClose(); } },
-    { id: 'nav-p3', category: 'Navigation', title: 'Go to Phase 3 — Shift Builder & AI', subtitle: 'Drag-and-drop calendar & conflict detection', action: () => { onNavigate('phase3'); onClose(); } },
-    { id: 'nav-p2', category: 'Navigation', title: 'Go to Phase 2 — Attendance Capture', subtitle: 'Live stream & geofence vector map', action: () => { onNavigate('phase2'); onClose(); } },
-    { id: 'nav-p1', category: 'Navigation', title: 'Go to Phase 1 — Admin Shell', subtitle: 'Location switcher & onboarding wizard', action: () => { onNavigate('phase1'); onClose(); } },
+    { id: 'nav-p14', category: 'Navigation', title: 'Go to White-Label Customizer & Franchise Rollups', subtitle: 'Live theme customizer & franchise rollups', action: () => { onNavigate('phase14'); onClose(); } },
+    { id: 'nav-p13', category: 'Navigation', title: 'Go to Offline-First Engine & Latency Audit', subtitle: 'IndexedDB sync banner & conflict resolution', action: () => { onNavigate('phase13'); onClose(); } },
+    { id: 'nav-p16', category: 'Navigation', title: 'Go to Security Center & GDPR Data Exporter', subtitle: 'SAML/2FA security center & GDPR ZIP exporter', action: () => { onNavigate('phase16'); onClose(); } },
+    { id: 'nav-p15', category: 'Navigation', title: 'Go to Accessibility & RTL Localized Engine', subtitle: 'WCAG 2.1 AA audit & RTL layout mirroring', action: () => { onNavigate('phase15'); onClose(); } },
+    { id: 'nav-p17', category: 'Navigation', title: 'Go to Design Ops Changelog & Referral Loop', subtitle: 'Release notes changelog & PLG referral loop', action: () => { onNavigate('phase17'); onClose(); } },
+    { id: 'nav-p7', category: 'Navigation', title: 'Go to Product Overview & Marketing Site', subtitle: 'Expressive hero & live interactive product demo', action: () => { onNavigate('phase7'); onClose(); } },
+    { id: 'nav-p1', category: 'Navigation', title: 'Go to Admin Shell & Command Palette', subtitle: 'Location switcher & onboarding wizard', action: () => { onNavigate('phase1'); onClose(); } },
     
     { id: 'act-punch', category: 'Actions', title: 'Punch In / Clock Shift', subtitle: 'Optimistic mobile punch terminal', action: () => { onNavigate('phase2'); onClose(); } },
-    { id: 'act-payroll', category: 'Actions', title: 'Authorize Payroll Run', subtitle: 'Start $142,736.40 disbursal pipeline', action: () => { onNavigate('phase4'); onClose(); } },
+    { id: 'act-payroll', category: 'Actions', title: 'Authorize INR Payroll Run', subtitle: 'Start ₹1,42,736.40 disbursal pipeline', action: () => { onNavigate('phase4'); onClose(); } },
     { id: 'act-shift', category: 'Actions', title: 'Create Shift Slot', subtitle: 'Add shift to weekly roster grid', action: () => { onNavigate('phase3'); onClose(); } },
 
     { id: 'emp-alex', category: 'Employees', title: 'Alex Rivera', subtitle: 'Senior Tech Lead • Austin Hub', action: () => { onNavigate('phase2'); onClose(); } },
