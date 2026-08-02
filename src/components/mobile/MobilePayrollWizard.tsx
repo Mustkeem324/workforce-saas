@@ -52,19 +52,26 @@ export const MobilePayrollWizard: React.FC = () => {
         {/* Step 1: Review Salaries */}
         {currentStep === 1 && (
           <Card elevation={2} className="space-y-4 p-5">
-            <h3 className="text-base font-extrabold text-[var(--text-primary)]">Review Cycle Payout Totals</h3>
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-base font-extrabold text-[var(--text-primary)]">Step 1 — Review Aggregate Payroll Batch</h3>
+                <p className="text-xs text-[var(--text-tertiary)] font-mono">July 20, 2026 – August 2, 2026 (Bi-Weekly)</p>
+              </div>
+              <Badge variant="neutral font-mono">184 ACTIVE EMPLOYEES</Badge>
+            </div>
+
             <div className="space-y-2 font-mono tabular-nums text-xs">
               <div className="flex justify-between p-3 rounded-xl bg-[var(--bg-canvas)]">
-                <span className="font-sans text-[var(--text-secondary)]">Total Gross Salaries:</span>
-                <span className="font-bold text-emerald-400">$142,736.40</span>
+                <span className="font-sans text-[var(--text-secondary)]">Total Gross Wages:</span>
+                <span className="font-bold text-[var(--text-primary)] text-sm">$178,420.50</span>
               </div>
               <div className="flex justify-between p-3 rounded-xl bg-[var(--bg-canvas)]">
-                <span className="font-sans text-[var(--text-secondary)]">Tax & Benefit Deductions:</span>
-                <span className="font-bold text-rose-400">-$38,486.40</span>
+                <span className="font-sans text-[var(--text-secondary)]">Estimated Tax Withholdings:</span>
+                <span className="font-bold text-rose-400 text-sm">-$35,684.10</span>
               </div>
-              <div className="flex justify-between p-3 rounded-xl bg-[var(--accent-500)]/15 border border-[var(--accent-500)]/40 font-bold">
-                <span className="font-sans text-[var(--text-primary)]">Total Net Payroll:</span>
-                <span className="text-[var(--accent-500)] text-sm">$104,250.00</span>
+              <div className="flex justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 font-bold">
+                <span className="font-sans text-emerald-400">Net Disbursal Amount:</span>
+                <span className="text-emerald-400 text-base">$142,736.40</span>
               </div>
             </div>
           </Card>
@@ -111,7 +118,7 @@ export const MobilePayrollWizard: React.FC = () => {
             <ShieldAlert className="w-10 h-10 text-[var(--accent-500)] mx-auto" />
             <h3 className="text-base font-extrabold text-[var(--text-primary)]">Final Mobile Approval Confirmation</h3>
             <p className="text-xs text-[var(--text-tertiary)]">
-              You are about to authorize a direct bank transfer payout of <strong>$104,250.00 Net</strong> for 184 active employees.
+              You are about to authorize a direct bank transfer payout of <strong>$142,736.40 Net</strong> for 184 active employees.
             </p>
           </Card>
         )}
