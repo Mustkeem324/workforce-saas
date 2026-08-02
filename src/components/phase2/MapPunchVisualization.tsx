@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, ShieldCheck, ShieldAlert, Smartphone, Clock, Crosshair, ZoomIn, ZoomOut, Layers } from 'lucide-react';
+import { Navigation, Crosshair, ZoomIn, ZoomOut, ShieldCheck, ShieldAlert, Smartphone } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -69,7 +69,7 @@ const MAP_POINTS: MapPinPoint[] = [
     yPct: 22,
     accuracyRadiusMeters: 28.5,
     isGeofenced: false,
-    coords: '19.0900° N, 72.8900° E (Out-of-Bounds)',
+    coords: '19.0900° N, 72.8900° E',
     device: 'Mobile GPS (Unverified)'
   }
 ];
@@ -79,83 +79,97 @@ export const MapPunchVisualization: React.FC = () => {
   const [showGeofenceBoundary, setShowGeofenceBoundary] = useState(true);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-5 w-full min-w-0">
       {/* Top Controls Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-4 md:p-5 rounded-2xl shadow-[var(--shadow-1)]">
-        <div>
-          <div className="flex items-center gap-2">
+      <div className="bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-4 md:p-5 rounded-2xl shadow-[var(--shadow-1)] space-y-3 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 max-w-full">
             <Navigation className="w-5 h-5 text-[var(--accent-500)] shrink-0" />
-            <h2 className="text-base md:text-lg font-extrabold text-[var(--text-primary)]">Map-Based Geofence Punch Inspector</h2>
-            <Badge variant="accent">VECTOR GEOFENCE</Badge>
+            <h2 
+              className="font-extrabold text-[var(--text-primary)] tracking-tight leading-snug whitespace-normal break-normal text-base md:text-lg"
+              style={{ wordBreak: 'normal', overflowWrap: 'normal' }}
+            >
+              Map-Based Geofence Punch Inspector
+            </h2>
           </div>
-          <p className="text-xs text-[var(--text-tertiary)] mt-1">
-            Plotted GPS punches with accuracy radius circles and custom avatar pins — no generic markers.
-          </p>
+          <Badge variant="accent" className="shrink-0 whitespace-nowrap">VECTOR GEOFENCE</Badge>
         </div>
 
-        <div className="flex items-center gap-3">
+        <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+          Plotted GPS punches with accuracy radius circles and custom avatar pins.
+        </p>
+
+        <div className="pt-1 flex items-center">
           <Button
             variant={showGeofenceBoundary ? 'accent' : 'outline'}
             size="sm"
             onClick={() => setShowGeofenceBoundary(!showGeofenceBoundary)}
             leftIcon={<Crosshair className="w-4 h-4" />}
-            className="min-touch text-xs"
+            aria-pressed={showGeofenceBoundary}
+            className="min-touch text-xs font-semibold"
           >
             {showGeofenceBoundary ? 'Geofence Perimeter: ON' : 'Geofence Perimeter: OFF'}
           </Button>
         </div>
       </div>
 
-      {/* Map Viewport Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Custom Styled Dark SVG Map Canvas */}
-        <div className="lg:col-span-2 relative bg-[var(--ink-950)] border-2 border-[var(--border-default)] rounded-3xl h-[360px] md:h-[520px] overflow-hidden shadow-[var(--shadow-3)] select-none">
-          {/* Map Grid Pattern / Dark Vector Topography Background */}
+      {/* Map Viewport & Inspector Sub-Grid
+          Layout:
+          - XL screens (>=1280px): Side-by-side grid with map minmax(0,1fr) and inspector minmax(280px, 320px)
+          - Below XL screens: Single column vertical stack
+      */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] gap-6 items-start min-w-0">
+        {/* Main Vector SVG Map Canvas Container */}
+        <div className="w-full min-w-0 relative bg-[var(--ink-950)] border-2 border-[var(--border-default)] rounded-3xl h-[380px] sm:h-[460px] md:h-[500px] aspect-4/3 overflow-hidden shadow-[var(--shadow-3)] select-none">
+          {/* Map Grid Pattern / Topography Background */}
           <div 
-            className="absolute inset-0 opacity-20"
+            className="absolute inset-0 opacity-20 pointer-events-none"
             style={{
               backgroundImage: `radial-gradient(circle at 1px 1px, rgba(224, 90, 71, 0.4) 1px, transparent 0)`,
               backgroundSize: '24px 24px'
             }}
           />
 
-          {/* Simulated Vector Roads & Facility Boundary Layer */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
-            {/* Facility Geofence Polygon Ring */}
+          {/* Vector Roads & Geofence Boundary Layer */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
             {showGeofenceBoundary && (
               <g>
                 <circle 
                   cx="50%" 
                   cy="48%" 
-                  r="120" 
+                  r="130" 
                   fill="rgba(224, 90, 71, 0.06)" 
                   stroke="var(--accent-500)" 
                   strokeWidth="2" 
                   strokeDasharray="6 6"
-                  className="animate-pulse"
                 />
-                <text x="50%" y="18%" textAnchor="middle" fill="var(--accent-400)" fontSize="9" fontFamily="sans-serif" fontWeight="bold" letterSpacing="0.1em">
-                  MUMBAI FACILITY GEOFENCE PERIMETER (RADIUS: 150M)
+                <text x="50%" y="16%" textAnchor="middle" fill="var(--accent-400)" fontSize="10" fontFamily="sans-serif" fontWeight="bold" letterSpacing="0.08em">
+                  MUMBAI FACILITY GEOFENCE PERIMETER (150M RADIUS)
                 </text>
               </g>
             )}
 
-            {/* Vector Roads */}
             <path d="M0 260 Q 300 240, 800 270" stroke="#1E293B" strokeWidth="12" fill="none" />
             <path d="M400 0 Q 420 300, 440 600" stroke="#1E293B" strokeWidth="10" fill="none" />
           </svg>
 
           {/* Map Controls */}
           <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
-            <button className="p-2 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)] min-touch">
+            <button 
+              aria-label="Zoom in map"
+              className="p-2.5 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)] min-touch flex items-center justify-center"
+            >
               <ZoomIn className="w-4 h-4" />
             </button>
-            <button className="p-2 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)] min-touch">
+            <button 
+              aria-label="Zoom out map"
+              className="p-2.5 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)] min-touch flex items-center justify-center"
+            >
               <ZoomOut className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Interactive Map Pins with Avatar Badges */}
+          {/* Interactive Map Pins */}
           {MAP_POINTS.map((pt) => {
             const isSelected = selectedPin?.id === pt.id;
             return (
@@ -163,7 +177,11 @@ export const MapPunchVisualization: React.FC = () => {
                 key={pt.id}
                 style={{ left: `${pt.xPct}%`, top: `${pt.yPct}%` }}
                 onClick={() => setSelectedPin(pt)}
-                className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
+                className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group min-touch"
+                role="button"
+                tabIndex={0}
+                aria-label={`Select ${pt.employeeName} punch pin`}
+                onKeyDown={(e) => e.key === 'Enter' && setSelectedPin(pt)}
               >
                 {/* Accuracy Radius Circle */}
                 <div 
@@ -182,8 +200,8 @@ export const MapPunchVisualization: React.FC = () => {
 
                 {/* Custom Avatar Pin Marker */}
                 <motion.div
-                  whileHover={{ scale: 1.25 }}
-                  animate={{ scale: isSelected ? 1.2 : 1 }}
+                  whileHover={{ scale: 1.2 }}
+                  animate={{ scale: isSelected ? 1.15 : 1 }}
                   className={`
                     relative w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-xl border-2 transition-all
                     ${pt.isGeofenced 
@@ -192,8 +210,6 @@ export const MapPunchVisualization: React.FC = () => {
                   `}
                 >
                   <span>{pt.avatar}</span>
-
-                  {/* Status Dot */}
                   <span 
                     className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[var(--ink-950)] ${
                       pt.isGeofenced ? 'bg-emerald-400' : 'bg-rose-500'
@@ -205,63 +221,73 @@ export const MapPunchVisualization: React.FC = () => {
           })}
         </div>
 
-        {/* Right: Selected Pin Inspector Panel */}
-        <Card elevation={2} className="space-y-4 p-5">
-          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-            <h3 className="text-sm font-bold text-[var(--text-primary)]">Punch Location Inspector</h3>
-            <Badge variant="neutral">MANAGER AUDIT</Badge>
+        {/* Selected Pin Inspector Panel */}
+        <Card elevation={2} className="p-5 space-y-4 w-full min-w-0 shrink-0">
+          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 gap-2 flex-wrap">
+            <h3 className="text-sm font-extrabold text-[var(--text-primary)] tracking-tight">Punch Location Inspector</h3>
+            <Badge variant="neutral" className="shrink-0">MANAGER AUDIT</Badge>
           </div>
 
           <AnimatePresence mode="wait">
             {selectedPin ? (
               <motion.div
                 key={selectedPin.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-4"
+                exit={{ opacity: 0, y: -8 }}
+                className="space-y-4 min-w-0"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[var(--accent-500)] text-white flex items-center justify-center font-extrabold text-base shadow-md shrink-0">
+                {/* Employee Info Header */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-2xl bg-[var(--accent-500)] text-white flex items-center justify-center font-black text-sm shadow-md shrink-0">
                     {selectedPin.avatar}
                   </div>
-                  <div>
-                    <h4 className="text-base font-extrabold text-[var(--text-primary)]">{selectedPin.employeeName}</h4>
-                    <p className="text-xs text-[var(--text-tertiary)]">{selectedPin.role}</p>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-extrabold text-[var(--text-primary)] truncate">{selectedPin.employeeName}</h4>
+                    <p className="text-xs text-[var(--text-tertiary)] truncate">{selectedPin.role}</p>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[var(--text-tertiary)]">Geofence Compliance:</span>
-                    <Badge variant={selectedPin.isGeofenced ? 'success' : 'danger'}>
+                {/* Telemetry Data Grid Rows */}
+                <div className="p-3.5 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] space-y-3 text-xs min-w-0">
+                  <div className="flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-2.5">
+                    <span className="text-[var(--text-tertiary)] font-medium">Compliance:</span>
+                    <Badge variant={selectedPin.isGeofenced ? 'success' : 'danger'} className="shrink-0">
                       {selectedPin.isGeofenced ? 'VERIFIED INSIDE' : 'GEOFENCE BREACH'}
                     </Badge>
                   </div>
 
-                  <div className="flex justify-between border-t border-[var(--border-subtle)] pt-2">
-                    <span className="text-[var(--text-tertiary)]">Punch Timestamp:</span>
-                    <span className="font-mono font-bold text-[var(--text-primary)]">{selectedPin.time}</span>
+                  <div className="grid grid-cols-[minmax(110px,1.2fr)_minmax(100px,auto)] gap-2 items-center border-b border-[var(--border-subtle)] pb-2.5">
+                    <span className="text-[var(--text-tertiary)] font-medium">Timestamp:</span>
+                    <span className="font-mono font-bold text-[var(--text-primary)] text-right whitespace-nowrap tabular-nums">
+                      {selectedPin.time}
+                    </span>
                   </div>
 
-                  <div className="flex justify-between border-t border-[var(--border-subtle)] pt-2">
-                    <span className="text-[var(--text-tertiary)]">Coordinates:</span>
-                    <span className="font-mono text-[11px] text-[var(--text-secondary)]">{selectedPin.coords}</span>
+                  <div className="grid grid-cols-[minmax(100px,1fr)_minmax(130px,auto)] gap-2 items-center border-b border-[var(--border-subtle)] pb-2.5">
+                    <span className="text-[var(--text-tertiary)] font-medium">Coordinates:</span>
+                    <span className="font-mono text-[11px] font-semibold text-[var(--text-secondary)] text-right whitespace-nowrap tabular-nums">
+                      {selectedPin.coords}
+                    </span>
                   </div>
 
-                  <div className="flex justify-between border-t border-[var(--border-subtle)] pt-2">
-                    <span className="text-[var(--text-tertiary)]">GPS Accuracy Radius:</span>
-                    <span className="font-mono font-bold text-[var(--accent-500)]">±{selectedPin.accuracyRadiusMeters}m</span>
+                  <div className="grid grid-cols-[minmax(110px,1.2fr)_minmax(100px,auto)] gap-2 items-center border-b border-[var(--border-subtle)] pb-2.5">
+                    <span className="text-[var(--text-tertiary)] font-medium">GPS Accuracy:</span>
+                    <span className="font-mono font-extrabold text-[var(--accent-500)] text-right whitespace-nowrap tabular-nums">
+                      ±{selectedPin.accuracyRadiusMeters}m
+                    </span>
                   </div>
 
-                  <div className="flex justify-between border-t border-[var(--border-subtle)] pt-2">
-                    <span className="text-[var(--text-tertiary)]">Device Terminal:</span>
-                    <span className="font-semibold text-[var(--text-primary)]">{selectedPin.device}</span>
+                  <div className="grid grid-cols-[minmax(100px,1fr)_minmax(120px,auto)] gap-2 items-center pt-0.5">
+                    <span className="text-[var(--text-tertiary)] font-medium">Device Terminal:</span>
+                    <span className="font-semibold text-[var(--text-primary)] text-right text-[11px] truncate">
+                      {selectedPin.device}
+                    </span>
                   </div>
                 </div>
               </motion.div>
             ) : (
-              <div className="text-xs text-[var(--text-tertiary)] text-center py-12">
+              <div className="text-xs text-[var(--text-tertiary)] text-center py-10">
                 Click any pin on the map to inspect punch telemetry.
               </div>
             )}
