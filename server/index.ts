@@ -15,6 +15,7 @@ import {
 } from './validation.ts';
 import { calculateStatutoryDeductions } from './statutory.ts';
 import { metricsMiddleware, generatePrometheusMetrics } from './metrics.ts';
+import { extractEmbeddingFromBase64, compareEmbeddings } from './faceRecognition.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,7 +32,7 @@ if (NODE_ENV === 'production' && (!JWT_SECRET || JWT_SECRET === 'dev-secret-key-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(metricsMiddleware);
 
 // CORS Middleware
@@ -48,16 +49,16 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Rate Limiting Middlewares
 export const loginRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 login attempts per window per IP
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   message: { status: 'error', code: 429, message: 'Too many login attempts. Please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false
 });
 
 export const punchRateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // 10 punches per minute per IP
+  windowMs: 60 * 1000,
+  max: 10,
   message: { status: 'error', code: 429, message: 'Punch rate limit exceeded. Please wait a minute.' },
   standardHeaders: true,
   legacyHeaders: false
@@ -84,6 +85,16 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS face_enrollments (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    employee_name TEXT NOT NULL,
+    embedding TEXT NOT NULL,
+    enrolled_at TEXT DEFAULT (datetime('now')),
+    consent_given_at TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS attendance_punches (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
@@ -92,6 +103,7 @@ db.exec(`
     timestamp DATETIME NOT NULL,
     location TEXT NOT NULL,
     type TEXT CHECK(type IN ('IN', 'OUT')),
+    method TEXT DEFAULT 'gps',
     geofence_status TEXT CHECK(geofence_status IN ('VERIFIED', 'OUT_OF_BOUNDS'))
   );
 
@@ -155,6 +167,7 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'OPERATIONAL',
     currency: 'INR (₹)',
+    faceRecognition: 'ACTIVE (128-d Vector Engine)',
     dbEngine: 'SQLite3 (better-sqlite3)',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
@@ -195,7 +208,139 @@ app.post('/api/v1/auth/login', loginRateLimiter, (req: Request, res: Response) =
   }
 });
 
-// Attendance API (Rate Limited & Zod Validated)
+// FACE RECOGNITION ENROLLMENT ENDPOINTS
+
+// Enrol Employee Face (Requires Explicit Opt-in Consent)
+app.post('/api/v1/employees/:id/face-enroll', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { imageBase64, consentGiven, employeeName } = req.body;
+  const tenantId = (req as any).tenantId;
+
+  if (!consentGiven) {
+    res.status(400).json({
+      status: 'error',
+      code: 400,
+      message: 'Explicit consent is mandatory before enrolling biometric face data.'
+    });
+    return;
+  }
+
+  if (!imageBase64) {
+    res.status(400).json({ status: 'error', code: 400, message: 'imageBase64 photo frame is required.' });
+    return;
+  }
+
+  const embedding = await extractEmbeddingFromBase64(imageBase64);
+  const now = new Date().toISOString();
+  const enrollmentId = `fe-${Date.now()}`;
+
+  // Delete existing enrollment for user if re-enrolling
+  db.prepare('DELETE FROM face_enrollments WHERE tenant_id = ? AND user_id = ?').run(tenantId, id);
+
+  const insert = db.prepare(`
+    INSERT INTO face_enrollments (id, tenant_id, user_id, employee_name, embedding, consent_given_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  insert.run(enrollmentId, tenantId, id, employeeName || 'Alex Rivera', JSON.stringify(embedding), now);
+
+  // Log in Audit Trail
+  db.prepare(`
+    INSERT INTO audit_logs (id, tenant_id, actor, action, target, diff_after)
+    VALUES (?, ?, ?, 'FACE_ENROLLED', ?, ?)
+  `).run(`aud-${Date.now()}`, tenantId, 'Alex Rivera (Admin)', id, JSON.stringify({ consentGivenAt: now }));
+
+  res.status(201).json({ status: 'success', enrolled: true, enrollmentId });
+});
+
+// Delete Employee Face Enrollment (Hard Delete)
+app.post('/api/v1/employees/:id/face-enrollment/delete', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const tenantId = (req as any).tenantId;
+
+  const result = db.prepare('DELETE FROM face_enrollments WHERE tenant_id = ? AND user_id = ?').run(tenantId, id);
+
+  // Log Hard Delete in Audit Trail
+  db.prepare(`
+    INSERT INTO audit_logs (id, tenant_id, actor, action, target)
+    VALUES (?, ?, ?, 'FACE_DATA_DELETED', ?)
+  `).run(`aud-${Date.now()}`, tenantId, 'Alex Rivera (Self-Serve)', id);
+
+  res.json({ status: 'success', deleted: result.changes > 0 });
+});
+
+// FACE PUNCH ATTENDANCE ENDPOINT
+app.post('/api/v1/attendance/punch/face', punchRateLimiter, async (req: Request, res: Response) => {
+  const { locationId, punchType, imageBase64 } = req.body;
+  const tenantId = (req as any).tenantId;
+
+  if (!locationId || !imageBase64) {
+    res.status(400).json({ status: 'error', code: 400, message: 'locationId and imageBase64 are required.' });
+    return;
+  }
+
+  // 1. Extract query face embedding vector
+  const queryEmbedding = await extractEmbeddingFromBase64(imageBase64);
+
+  // 2. Fetch all tenant enrolled face embeddings
+  const enrolledList = db.prepare('SELECT * FROM face_enrollments WHERE tenant_id = ?').all(tenantId) as any[];
+
+  if (enrolledList.length === 0) {
+    res.status(401).json({ status: 'error', code: 401, message: 'Face not recognized. No face enrollments found for organization.' });
+    return;
+  }
+
+  // 3. Find best Euclidean distance match
+  let bestMatch: any = null;
+  let minDistance = 1.0;
+
+  for (const item of enrolledList) {
+    const storedVector = JSON.parse(item.embedding) as number[];
+    const dist = compareEmbeddings(queryEmbedding, storedVector);
+    if (dist < minDistance) {
+      minDistance = dist;
+      bestMatch = item;
+    }
+  }
+
+  // Threshold check (< 0.6 match limit)
+  if (!bestMatch || minDistance > 0.6) {
+    res.status(401).json({
+      status: 'error',
+      code: 401,
+      message: 'Face not recognized. Verification distance exceeded match threshold.'
+    });
+    return;
+  }
+
+  // 4. Create Face Attendance Punch
+  const punchId = `pn-${Date.now()}`;
+  const now = new Date().toISOString();
+
+  const insert = db.prepare(`
+    INSERT INTO attendance_punches (id, tenant_id, employee_id, employee_name, timestamp, location, type, method, geofence_status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'face', 'VERIFIED')
+  `);
+  insert.run(punchId, tenantId, bestMatch.user_id, bestMatch.employee_name, now, locationId, punchType || 'IN');
+
+  const newPunch = {
+    id: punchId,
+    tenant_id: tenantId,
+    employee_id: bestMatch.user_id,
+    employee_name: bestMatch.employee_name,
+    timestamp: now,
+    location: locationId,
+    type: punchType || 'IN',
+    method: 'face',
+    matchConfidence: `${Math.round((1 - minDistance) * 100)}%`,
+    geofence_status: 'VERIFIED'
+  };
+
+  broadcastWebSocket({ event: 'PUNCH_CREATED', data: newPunch });
+
+  res.status(201).json({ status: 'success', verified: true, data: newPunch });
+});
+
+// Standard Attendance API
 app.get('/api/v1/attendance/punches', (req: Request, res: Response) => {
   const tenantId = (req as any).tenantId;
   const punches = db.prepare('SELECT * FROM attendance_punches WHERE tenant_id = ? ORDER BY timestamp DESC').all(tenantId);
@@ -220,12 +365,12 @@ app.post('/api/v1/attendance/punch', punchRateLimiter, (req: Request, res: Respo
   const now = new Date().toISOString();
 
   const insert = db.prepare(`
-    INSERT INTO attendance_punches (id, tenant_id, employee_id, employee_name, timestamp, location, type, geofence_status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'VERIFIED')
+    INSERT INTO attendance_punches (id, tenant_id, employee_id, employee_name, timestamp, location, type, method, geofence_status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'gps', 'VERIFIED')
   `);
   insert.run(punchId, tenantId, employeeId, employeeName, now, location, type);
 
-  const newPunch = { id: punchId, tenant_id: tenantId, employee_id: employeeId, employee_name: employeeName, timestamp: now, location, type, geofence_status: 'VERIFIED' };
+  const newPunch = { id: punchId, tenant_id: tenantId, employee_id: employeeId, employee_name: employeeName, timestamp: now, location, type, method: 'gps', geofence_status: 'VERIFIED' };
   broadcastWebSocket({ event: 'PUNCH_CREATED', data: newPunch });
 
   res.status(201).json({ status: 'success', data: newPunch });
@@ -326,7 +471,7 @@ const clients = new Set<WebSocket>();
 
 wss.on('connection', (ws: WebSocket) => {
   clients.add(ws);
-  ws.send(JSON.stringify({ event: 'CONNECTED', message: 'Synkron AI Production Hardened Backend Active' }));
+  ws.send(JSON.stringify({ event: 'CONNECTED', message: 'Synkron AI Production Hardened Backend Active (Face Recognition Ready)' }));
 
   ws.on('close', () => clients.delete(ws));
 });
@@ -344,6 +489,6 @@ export { app, server, db };
 
 if (process.env.NODE_ENV !== 'test') {
   server.listen(PORT, () => {
-    console.log(`⚡ Synkron AI Production Hardened Backend listening on port ${PORT}`);
+    console.log(`⚡ Synkron AI Production Hardened Backend listening on port ${PORT} (Face Recognition Active)`);
   });
 }

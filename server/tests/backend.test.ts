@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calculateStatutoryDeductions } from '../statutory';
 import { LoginSchema, PunchSchema, ShiftSchema, PayrollRunSchema } from '../validation';
+import { compareEmbeddings, extractEmbeddingFromBase64 } from '../faceRecognition';
 
 describe('Production Hardened Backend Engine Verification', () => {
 
@@ -56,6 +57,30 @@ describe('Production Hardened Backend Engine Verification', () => {
       });
 
       expect(result.employeeStateInsurance).toBe(135); // 0.75% of 18,000 = 135
+    });
+  });
+
+  // 3. Face Recognition Embedding & Vector Matching Tests
+  describe('Server-Side Face Recognition Vector Matching Engine', () => {
+    it('should calculate 0.0 distance for identical face embedding vectors', () => {
+      const vecA = [0.12, -0.45, 0.88, 0.33];
+      const distance = compareEmbeddings(vecA, vecA);
+      expect(distance).toBe(0);
+    });
+
+    it('should extract 128-d normalized vector from image base64', async () => {
+      const mockBase64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD...';
+      const vector = await extractEmbeddingFromBase64(mockBase64);
+      expect(vector.length).toBe(128);
+      expect(vector[0]).toBeGreaterThanOrEqual(-1.0);
+      expect(vector[0]).toBeLessThanOrEqual(1.0);
+    });
+
+    it('should reject non-matching face vectors exceeding 0.6 distance threshold', () => {
+      const vecA = Array(128).fill(0.5);
+      const vecB = Array(128).fill(-0.5);
+      const distance = compareEmbeddings(vecA, vecB);
+      expect(distance).toBeGreaterThan(0.6);
     });
   });
 });
