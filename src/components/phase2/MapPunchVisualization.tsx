@@ -11,7 +11,7 @@ export interface MapPinPoint {
   avatar: string;
   role: string;
   time: string;
-  xPct: number; // Percentage offset on SVG map canvas
+  xPct: number;
   yPct: number;
   accuracyRadiusMeters: number;
   isGeofenced: boolean;
@@ -30,7 +30,7 @@ const MAP_POINTS: MapPinPoint[] = [
     yPct: 42,
     accuracyRadiusMeters: 3.2,
     isGeofenced: true,
-    coords: '30.2672° N, 97.7431° W',
+    coords: '19.0760° N, 72.8777° E',
     device: 'Mobile GPS (iPhone 15 Pro)'
   },
   {
@@ -43,7 +43,7 @@ const MAP_POINTS: MapPinPoint[] = [
     yPct: 46,
     accuracyRadiusMeters: 1.5,
     isGeofenced: true,
-    coords: '30.2678° N, 97.7438° W',
+    coords: '19.0765° N, 72.8782° E',
     device: 'Biometric Facial Scanner #02'
   },
   {
@@ -56,7 +56,7 @@ const MAP_POINTS: MapPinPoint[] = [
     yPct: 55,
     accuracyRadiusMeters: 4.8,
     isGeofenced: true,
-    coords: '30.2665° N, 97.7420° W',
+    coords: '19.0755° N, 72.8765° E',
     device: 'Mobile GPS (Galaxy S24)'
   },
   {
@@ -69,7 +69,7 @@ const MAP_POINTS: MapPinPoint[] = [
     yPct: 22,
     accuracyRadiusMeters: 28.5,
     isGeofenced: false,
-    coords: '30.2850° N, 97.7600° W (Out-of-Bounds)',
+    coords: '19.0900° N, 72.8900° E (Out-of-Bounds)',
     device: 'Mobile GPS (Unverified)'
   }
 ];
@@ -81,15 +81,15 @@ export const MapPunchVisualization: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Controls Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-5 rounded-2xl shadow-[var(--shadow-1)]">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-4 md:p-5 rounded-2xl shadow-[var(--shadow-1)]">
         <div>
           <div className="flex items-center gap-2">
-            <Navigation className="w-5 h-5 text-[var(--accent-500)]" />
-            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">Map-Based Punch Inspector (Manager View)</h2>
-            <Badge variant="accent">CUSTOM MAPBOX ENGINE</Badge>
+            <Navigation className="w-5 h-5 text-[var(--accent-500)] shrink-0" />
+            <h2 className="text-base md:text-lg font-extrabold text-[var(--text-primary)]">Map-Based Geofence Punch Inspector</h2>
+            <Badge variant="accent">VECTOR GEOFENCE</Badge>
           </div>
           <p className="text-xs text-[var(--text-tertiary)] mt-1">
-            Plotted GPS punches with accuracy radius circles and custom avatar pins — no default blue markers.
+            Plotted GPS punches with accuracy radius circles and custom avatar pins — no generic markers.
           </p>
         </div>
 
@@ -99,6 +99,7 @@ export const MapPunchVisualization: React.FC = () => {
             size="sm"
             onClick={() => setShowGeofenceBoundary(!showGeofenceBoundary)}
             leftIcon={<Crosshair className="w-4 h-4" />}
+            className="min-touch text-xs"
           >
             {showGeofenceBoundary ? 'Geofence Perimeter: ON' : 'Geofence Perimeter: OFF'}
           </Button>
@@ -108,7 +109,7 @@ export const MapPunchVisualization: React.FC = () => {
       {/* Map Viewport Container */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Custom Styled Dark SVG Map Canvas */}
-        <div className="lg:col-span-2 relative bg-[var(--ink-950)] border-2 border-[var(--border-default)] rounded-3xl h-[520px] overflow-hidden shadow-[var(--shadow-3)] select-none">
+        <div className="lg:col-span-2 relative bg-[var(--ink-950)] border-2 border-[var(--border-default)] rounded-3xl h-[360px] md:h-[520px] overflow-hidden shadow-[var(--shadow-3)] select-none">
           {/* Map Grid Pattern / Dark Vector Topography Background */}
           <div 
             className="absolute inset-0 opacity-20"
@@ -126,15 +127,15 @@ export const MapPunchVisualization: React.FC = () => {
                 <circle 
                   cx="50%" 
                   cy="48%" 
-                  r="140" 
+                  r="120" 
                   fill="rgba(224, 90, 71, 0.06)" 
                   stroke="var(--accent-500)" 
                   strokeWidth="2" 
                   strokeDasharray="6 6"
                   className="animate-pulse"
                 />
-                <text x="50%" y="22%" textAnchor="middle" fill="var(--accent-400)" fontSize="10" fontFamily="sans-serif" fontWeight="bold" letterSpacing="0.1em">
-                  AUSTIN FACILITY GEOFENCE PERIMETER (RADIUS: 150M)
+                <text x="50%" y="18%" textAnchor="middle" fill="var(--accent-400)" fontSize="9" fontFamily="sans-serif" fontWeight="bold" letterSpacing="0.1em">
+                  MUMBAI FACILITY GEOFENCE PERIMETER (RADIUS: 150M)
                 </text>
               </g>
             )}
@@ -146,10 +147,10 @@ export const MapPunchVisualization: React.FC = () => {
 
           {/* Map Controls */}
           <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
-            <button className="p-2 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)]">
+            <button className="p-2 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)] min-touch">
               <ZoomIn className="w-4 h-4" />
             </button>
-            <button className="p-2 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)]">
+            <button className="p-2 rounded-xl bg-[var(--ink-900)] text-white border border-[var(--ink-700)] shadow-md hover:bg-[var(--ink-800)] min-touch">
               <ZoomOut className="w-4 h-4" />
             </button>
           </div>
@@ -184,7 +185,7 @@ export const MapPunchVisualization: React.FC = () => {
                   whileHover={{ scale: 1.25 }}
                   animate={{ scale: isSelected ? 1.2 : 1 }}
                   className={`
-                    relative w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-xl border-2 transition-all
+                    relative w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-xl border-2 transition-all
                     ${pt.isGeofenced 
                       ? (isSelected ? 'bg-[var(--accent-500)] border-white shadow-[var(--shadow-accent-glow)]' : 'bg-[var(--ink-900)] border-[var(--accent-500)]')
                       : 'bg-rose-600 border-white shadow-rose-900/50'}
@@ -205,7 +206,7 @@ export const MapPunchVisualization: React.FC = () => {
         </div>
 
         {/* Right: Selected Pin Inspector Panel */}
-        <Card elevation={2} className="space-y-4">
+        <Card elevation={2} className="space-y-4 p-5">
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
             <h3 className="text-sm font-bold text-[var(--text-primary)]">Punch Location Inspector</h3>
             <Badge variant="neutral">MANAGER AUDIT</Badge>
@@ -221,7 +222,7 @@ export const MapPunchVisualization: React.FC = () => {
                 className="space-y-4"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[var(--accent-500)] text-white flex items-center justify-center font-extrabold text-base shadow-md">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--accent-500)] text-white flex items-center justify-center font-extrabold text-base shadow-md shrink-0">
                     {selectedPin.avatar}
                   </div>
                   <div>

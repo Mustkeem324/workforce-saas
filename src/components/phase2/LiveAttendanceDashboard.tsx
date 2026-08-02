@@ -33,7 +33,6 @@ export const LiveAttendanceDashboard: React.FC = () => {
   // Simulated WebSocket Live Stream
   useEffect(() => {
     const interval = setInterval(() => {
-      // Pick a random employee record to update state in real time
       const randomIdx = Math.floor(Math.random() * records.length);
       const targetRecord = records[randomIdx];
 
@@ -53,7 +52,6 @@ export const LiveAttendanceDashboard: React.FC = () => {
 
       const timestamp = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      // Update record in state
       setRecords(prev => prev.map(r => {
         if (r.id === targetRecord.id) {
           return {
@@ -67,11 +65,9 @@ export const LiveAttendanceDashboard: React.FC = () => {
         return r;
       }));
 
-      // Flash highlight the row
       setFlashRecordId(targetRecord.id);
       setFlashEventType(newType === 'Clock In' ? 'Clock In' : newType === 'Break Start' ? 'Break Start' : 'Clock Out');
 
-      // Add to live event stream
       const event: AttendanceEvent = {
         id: `evt-${Date.now()}`,
         recordId: targetRecord.id,
@@ -82,25 +78,22 @@ export const LiveAttendanceDashboard: React.FC = () => {
       };
       setRecentEvents(prev => [event, ...prev.slice(0, 5)]);
 
-      // Clear flash highlight after 1.8s
       setTimeout(() => {
         setFlashRecordId(null);
         setFlashEventType(null);
       }, 1800);
 
-    }, 4500); // Emits a live websocket event every 4.5 seconds
+    }, 4500);
 
     return () => clearInterval(interval);
   }, [records]);
 
-  // Filter records
   const filteredRecords = records.filter(r => {
     const matchesLoc = selectedLocation === 'All' || r.location === selectedLocation;
     const matchesQuery = r.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) || r.role.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesLoc && matchesQuery;
   });
 
-  // Summary counts
   const totalActive = records.filter(r => r.status === 'In-Facility').length;
   const totalOnBreak = records.filter(r => r.status === 'On-Break').length;
   const totalOut = records.filter(r => r.status === 'Clocked-Out').length;
@@ -109,11 +102,11 @@ export const LiveAttendanceDashboard: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Real-time Header Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-5 rounded-2xl shadow-[var(--shadow-1)]">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-4 md:p-5 rounded-2xl shadow-[var(--shadow-1)]">
         <div>
           <div className="flex items-center gap-2">
-            <Radio className="w-4 h-4 text-[var(--accent-500)] animate-pulse" />
-            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">Live Attendance Stream Engine</h2>
+            <Radio className="w-4 h-4 text-[var(--accent-500)] animate-pulse shrink-0" />
+            <h2 className="text-base md:text-lg font-extrabold text-[var(--text-primary)]">Live Attendance Stream Engine</h2>
             <Badge variant="accent" dot>WEBSOCKET CONNECTED</Badge>
           </div>
           <p className="text-xs text-[var(--text-tertiary)] mt-1">
@@ -121,21 +114,21 @@ export const LiveAttendanceDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <Input
             placeholder="Search roster..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             leftIcon={<Search className="w-4 h-4" />}
-            className="w-48"
+            className="flex-1 md:w-48"
           />
 
-          <div className="flex items-center gap-1 bg-[var(--bg-canvas)] p-1 rounded-xl border border-[var(--border-subtle)] text-xs font-semibold">
-            {['All', 'Austin Hub', 'Dallas Facility'].map(loc => (
+          <div className="flex items-center gap-1 bg-[var(--bg-canvas)] p-1 rounded-xl border border-[var(--border-subtle)] text-xs font-semibold overflow-x-auto scrollbar-none">
+            {['All', 'Mumbai Hub', 'Delhi Facility'].map(loc => (
               <button
                 key={loc}
                 onClick={() => setSelectedLocation(loc)}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
+                className={`px-3 py-1.5 rounded-lg transition-all shrink-0 ${
                   selectedLocation === loc 
                     ? 'bg-[var(--accent-500)] text-white shadow-sm' 
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -148,55 +141,55 @@ export const LiveAttendanceDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Metric Counters */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card elevation={1} className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500">
-            <CheckCircle2 className="w-6 h-6" />
+      {/* Metric Counters Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <Card elevation={1} className="p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs text-[var(--text-tertiary)] font-medium">IN-FACILITY</span>
-            <div className="text-2xl font-black font-mono tabular-nums text-[var(--text-primary)]">{totalActive}</div>
+            <span className="text-[11px] text-[var(--text-tertiary)] font-medium">IN-FACILITY</span>
+            <div className="text-xl md:text-2xl font-black font-mono tabular-nums text-[var(--text-primary)]">{totalActive}</div>
           </div>
         </Card>
 
-        <Card elevation={1} className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500">
-            <Coffee className="w-6 h-6" />
+        <Card elevation={1} className="p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+            <Coffee className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs text-[var(--text-tertiary)] font-medium">ON BREAK</span>
-            <div className="text-2xl font-black font-mono tabular-nums text-[var(--text-primary)]">{totalOnBreak}</div>
+            <span className="text-[11px] text-[var(--text-tertiary)] font-medium">ON BREAK</span>
+            <div className="text-xl md:text-2xl font-black font-mono tabular-nums text-[var(--text-primary)]">{totalOnBreak}</div>
           </div>
         </Card>
 
-        <Card elevation={1} className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-[var(--bg-element-hover)] text-[var(--text-tertiary)]">
-            <LogOut className="w-6 h-6" />
+        <Card elevation={1} className="p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-[var(--bg-element-hover)] text-[var(--text-tertiary)] shrink-0">
+            <LogOut className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs text-[var(--text-tertiary)] font-medium">CLOCKED OUT</span>
-            <div className="text-2xl font-black font-mono tabular-nums text-[var(--text-primary)]">{totalOut}</div>
+            <span className="text-[11px] text-[var(--text-tertiary)] font-medium">CLOCKED OUT</span>
+            <div className="text-xl md:text-2xl font-black font-mono tabular-nums text-[var(--text-primary)]">{totalOut}</div>
           </div>
         </Card>
 
-        <Card elevation={1} className="flex items-center gap-4 border-l-4 border-l-[var(--danger-solid)]">
-          <div className="p-3 rounded-xl bg-red-500/10 text-red-500">
-            <ShieldAlert className="w-6 h-6" />
+        <Card elevation={1} className="p-4 flex items-center gap-3 border-l-4 border-l-[var(--danger-solid)]">
+          <div className="p-2.5 rounded-xl bg-red-500/10 text-red-500 shrink-0">
+            <ShieldAlert className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs text-red-400 font-medium">GEOFENCE ALERTS</span>
-            <div className="text-2xl font-black font-mono tabular-nums text-red-500">{totalAlerts}</div>
+            <span className="text-[11px] text-red-400 font-medium">GEOFENCE ALERTS</span>
+            <div className="text-xl md:text-2xl font-black font-mono tabular-nums text-red-500">{totalAlerts}</div>
           </div>
         </Card>
       </div>
 
       {/* Real-time Grid & Event Stream Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Main Attendance Table with Flash Row Highlights */}
+        {/* Main Attendance Table (Scrollable Container) */}
         <div className="lg:col-span-2 space-y-3">
-          <div className="bg-[var(--bg-surface-raised)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-[var(--shadow-2)]">
-            <table className="w-full text-left text-sm border-collapse">
+          <div className="bg-[var(--bg-surface-raised)] border border-[var(--border-subtle)] rounded-2xl overflow-x-auto shadow-[var(--shadow-2)]">
+            <table className="w-full text-left text-sm border-collapse min-w-[540px]">
               <thead>
                 <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-element-hover)] text-xs uppercase tracking-wider font-semibold text-[var(--text-secondary)]">
                   <th className="py-3 px-4">Employee</th>
@@ -245,7 +238,7 @@ export const LiveAttendanceDashboard: React.FC = () => {
                       </td>
                       <td className="py-3.5 px-4 text-xs text-[var(--text-secondary)]">
                         <span className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-[var(--accent-500)]" />
+                          <MapPin className="w-3.5 h-3.5 text-[var(--accent-500)] shrink-0" />
                           {record.location}
                         </span>
                       </td>
@@ -255,7 +248,7 @@ export const LiveAttendanceDashboard: React.FC = () => {
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-canvas)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
-                          <Smartphone className="w-3 h-3 text-[var(--accent-500)]" />
+                          <Smartphone className="w-3 h-3 text-[var(--accent-500)] shrink-0" />
                           {record.deviceType}
                         </span>
                       </td>
@@ -268,10 +261,10 @@ export const LiveAttendanceDashboard: React.FC = () => {
         </div>
 
         {/* Right: Live Event Stream Feed */}
-        <Card elevation={1} className="space-y-4">
+        <Card elevation={1} className="p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[var(--accent-500)]" />
+              <Zap className="w-4 h-4 text-[var(--accent-500)] shrink-0" />
               <h3 className="text-sm font-bold text-[var(--text-primary)]">Live WebSocket Activity Feed</h3>
             </div>
             <Badge variant="accent">LIVE</Badge>

@@ -38,7 +38,7 @@ const SAMPLE_CORRECTIONS: CorrectionRequest[] = [
     requestedTime: '08:00:00 AM (Actual Shift Start)',
     timeDelta: '-42 minutes',
     originalLocation: 'Geofence Breach (North Gate)',
-    requestedLocation: 'Austin Distribution Hub (Verified)',
+    requestedLocation: 'Mumbai Logistics Hub (Verified)',
     reason: 'Biometric kiosk #04 was performing firmware update during morning shift intake.',
     status: 'Pending',
     auditTrail: [
@@ -95,11 +95,11 @@ export const PunchCorrectionDiffUI: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-5 rounded-2xl shadow-[var(--shadow-1)]">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] p-4 md:p-5 rounded-2xl shadow-[var(--shadow-1)]">
         <div>
           <div className="flex items-center gap-2">
-            <FileDiff className="w-5 h-5 text-[var(--accent-500)]" />
-            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">Punch Correction Diff & Approval Trail</h2>
+            <FileDiff className="w-5 h-5 text-[var(--accent-500)] shrink-0" />
+            <h2 className="text-base md:text-lg font-extrabold text-[var(--text-primary)]">Punch Correction Diff & Approval Trail</h2>
             <Badge variant="accent">AUDIT TRAIL ENGINE</Badge>
           </div>
           <p className="text-xs text-[var(--text-tertiary)] mt-1">
@@ -117,7 +117,7 @@ export const PunchCorrectionDiffUI: React.FC = () => {
             <div
               key={req.id}
               onClick={() => setSelectedReqId(req.id)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+              className={`p-4 rounded-xl border cursor-pointer transition-all min-touch ${
                 selectedReqId === req.id 
                   ? 'border-[var(--accent-500)] bg-[var(--bg-surface-raised)] shadow-[var(--shadow-2)]' 
                   : 'border-[var(--border-subtle)] bg-[var(--bg-canvas)] hover:border-[var(--border-default)]'
@@ -125,7 +125,7 @@ export const PunchCorrectionDiffUI: React.FC = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[var(--accent-500)]/15 text-[var(--accent-500)] font-bold text-xs flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-[var(--accent-500)]/15 text-[var(--accent-500)] font-bold text-xs flex items-center justify-center shrink-0">
                     {req.avatar}
                   </div>
                   <div>
@@ -143,20 +143,21 @@ export const PunchCorrectionDiffUI: React.FC = () => {
 
         {/* Right 2 Columns: Side-by-Side Before vs After Diff Viewer */}
         <div className="lg:col-span-2 space-y-6">
-          <Card elevation={2} className="space-y-6">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+          <Card elevation={2} className="p-5 md:p-6 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-4">
               <div>
                 <span className="text-xs font-mono text-[var(--accent-500)] font-bold">CASE FILE #{selectedReq.id}</span>
                 <h3 className="text-base font-bold text-[var(--text-primary)]">{selectedReq.employeeName} — Punch Adjustment</h3>
               </div>
 
               {selectedReq.status === 'Pending' && (
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleAction('Rejected')}
                     leftIcon={<XCircle className="w-4 h-4" />}
+                    className="flex-1 sm:flex-none min-touch"
                   >
                     Reject Adjustment
                   </Button>
@@ -165,6 +166,7 @@ export const PunchCorrectionDiffUI: React.FC = () => {
                     size="sm"
                     onClick={() => handleAction('Approved')}
                     leftIcon={<CheckCircle2 className="w-4 h-4" />}
+                    className="flex-1 sm:flex-none min-touch"
                   >
                     Approve & Sync Payroll
                   </Button>
