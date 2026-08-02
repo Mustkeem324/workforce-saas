@@ -1,0 +1,180 @@
+// Synkron AI — Prisma Schema Definition (Multi-Tenant Production Engine)
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Organization {
+  id             String         @id @default(uuid())
+  name           String
+  slug           String         @unique
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  users          User[]
+  employees      Employee[]
+  faceProfiles   FaceProfile[]
+  attendance     AttendanceRecord[]
+  kioskDevices   KioskDevice[]
+  visitors       Visitor[]
+  payrollRuns    PayrollRun[]
+  auditLogs      AuditLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String       @unique
+  passwordHash   String
+  name           String
+  role           String       @default("EMPLOYEE") // SUPER_ADMIN, ORG_ADMIN, HR_MANAGER, PAYROLL_MANAGER, EMPLOYEE
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Employee {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeCode   String
+  firstName      String
+  lastName       String
+  email          String
+  department     String
+  designation    String
+  status         String       @default("ACTIVE") // ACTIVE, RESIGNED, TERMINATED
+  joinedAt       DateTime     @default(now())
+
+  faceProfile    FaceProfile?
+  attendance     AttendanceRecord[]
+  biometricConsent BiometricConsent?
+
+  @@unique([organizationId, employeeCode])
+  @@index([organizationId])
+  @@map("employees")
+}
+
+model FaceProfile {
+  id                   String       @id @default(uuid())
+  organizationId       String
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId           String       @unique
+  employee             Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  encryptedEmbedding   String       // AES-256-GCM Envelope Encrypted String
+  embeddingVersion     String       @default("v2.1-resnet")
+  status               String       @default("APPROVED") // APPROVED, PENDING, REJECTED, SUSPENDED
+  consentGiven         Boolean
+  consentTimestamp     DateTime
+  approvedBy           String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@map("face_profiles")
+}
+
+model BiometricConsent {
+  id               String    @id @default(uuid())
+  employeeId       String    @unique
+  employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  consentGiven     Boolean
+  consentTimestamp DateTime  @default(now())
+  withdrawnAt      DateTime?
+  ipAddress        String?
+
+  @@map("biometric_consents")
+}
+
+model KioskDevice {
+  id               String       @id @default(uuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deviceId         String       @unique
+  deviceName       String
+  branch           String
+  adminPinHash     String       // Scrypt Hashed PIN
+  secretKey        String       // Device HMAC Signing Secret
+  status           String       @default("ACTIVE") // ACTIVE, DISABLED, REVOKED
+  lastHeartbeat    DateTime?
+  createdAt        DateTime     @default(now())
+
+  @@index([organizationId])
+  @@map("kiosk_devices")
+}
+
+model AttendanceRecord {
+  id               String       @id @default(uuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId       String
+  employee         Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  timestamp        DateTime     @default(now())
+  location         String
+  actionType       String       // IN, OUT, BREAK_START, BREAK_END
+  verificationMethod String     // face, gps, kiosk, qr, pin
+  geofenceStatus   String       @default("UNVERIFIED") // VERIFIED, OUT_OF_BOUNDS, UNVERIFIED
+  matchScore       Float?
+  livenessScore    Float?
+  idempotencyKey   String?      @unique
+
+  @@index([organizationId])
+  @@index([employeeId])
+  @@map("attendance_records")
+}
+
+model Visitor {
+  id               String       @id @default(uuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  visitorName      String
+  company          String
+  hostName         String
+  purpose          String
+  badgeCode        String       @unique
+  status           String       @default("CHECKED_IN") // CHECKED_IN, CHECKED_OUT
+  createdAt        DateTime     @default(now())
+
+  @@index([organizationId])
+  @@map("visitors")
+}
+
+model PayrollRun {
+  id               String       @id @default(uuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  disbursalId      String       @unique
+  totalGross       Float
+  totalNet         Float
+  totalDeductions  Float
+  employeeCount    Int
+  currency         String       @default("INR")
+  cycle            String
+  status           String       @default("FINALIZED") // DRAFT, VALIDATED, FINALIZED
+  createdAt        DateTime     @default(now())
+
+  @@index([organizationId])
+  @@map("payroll_runs")
+}
+
+model AuditLog {
+  id               String       @id @default(uuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor            String
+  action           String
+  target           String
+  diffAfter        String?
+  timestamp        DateTime     @default(now())
+
+  @@index([organizationId])
+  @@map("audit_logs")
+}

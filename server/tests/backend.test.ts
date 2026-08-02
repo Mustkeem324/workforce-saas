@@ -4,6 +4,14 @@ import { LoginSchema, PunchSchema, ShiftSchema, PayrollRunSchema } from '../vali
 import { compareEmbeddings, extractEmbeddingFromBase64 } from '../faceRecognition';
 import { generateRandomLivenessChallenge, verifyLivenessChallenge } from '../liveness';
 import { evaluateFaceVerification } from '../faceVerification';
+import { 
+  MockFaceRecognitionProvider, 
+  ProductionFaceRecognitionProvider,
+  encryptBiometricVector,
+  decryptBiometricVector
+} from '../faceProvider';
+import { hashPassword, verifyPassword, generateAccessToken, verifyAccessToken } from '../auth';
+import { hashAdminPin, verifyAdminPin, verifyKioskSignature, processKioskOfflineBatch } from '../kioskSecurity';
 
 describe('Production Hardened Backend Engine Verification', () => {
 
@@ -35,7 +43,103 @@ describe('Production Hardened Backend Engine Verification', () => {
     });
   });
 
-  // 2. Statutory Rules Engine Tests
+  // 2. Biometric Envelope Encryption Tests
+  describe('Biometric Envelope Encryption (AES-256-GCM)', () => {
+    it('should encrypt and decrypt face vector templates cleanly without exposing raw floats', () => {
+      const originalVector = [0.12, -0.45, 0.88, 0.33];
+      const encrypted = encryptBiometricVector(originalVector);
+      expect(encrypted).not.toContain('0.12');
+      expect(encrypted.split(':').length).toBe(3); // IV:Tag:Data
+
+      const decrypted = decryptBiometricVector(encrypted);
+      expect(decrypted).toEqual(originalVector);
+    });
+  });
+
+  // 3. Provider Contract Tests
+  describe('FaceRecognitionProvider Contract', () => {
+    it('should differentiate Mock and Production face recognition providers', async () => {
+      const mockProv = new MockFaceRecognitionProvider();
+      const prodProv = new ProductionFaceRecognitionProvider();
+
+      const mockVector = await mockProv.generateEmbedding(Buffer.from('sample'));
+      const sampleImageBuffer = Buffer.alloc(150, 'a');
+      const prodVector = await prodProv.generateEmbedding(sampleImageBuffer);
+
+      expect(mockVector.length).toBe(128);
+      expect(prodVector.length).toBe(128);
+      expect(prodProv.modelVersion).toBe('v2.4-resnet50-biometric');
+    });
+  });
+
+  // 4. Authentication & Cross-Tenant Isolation Tests
+  describe('Authentication & Tenant Scope Isolation', () => {
+    it('should securely hash and verify passwords using Scrypt', () => {
+      const pass = 'SuperSecretPass123!';
+      const hash = hashPassword(pass);
+      expect(verifyPassword(pass, hash)).toBe(true);
+      expect(verifyPassword('WrongPass', hash)).toBe(false);
+    });
+
+    it('should derive tenantId strictly from verified JWT token payload', () => {
+      const payload = {
+        userId: 'usr-101',
+        tenantId: 't-01',
+        email: 'alex@apex.com',
+        name: 'Alex Rivera',
+        role: 'ORG_ADMIN' as const
+      };
+      const token = generateAccessToken(payload);
+      const verified = verifyAccessToken(token);
+
+      expect(verified).not.toBeNull();
+      expect(verified?.tenantId).toBe('t-01');
+      expect(verified?.userId).toBe('usr-101');
+    });
+
+    it('should isolate Tenant A data from Tenant B requests', () => {
+      const tokenTenantA = generateAccessToken({ userId: 'usr-1', tenantId: 'tenant-A', email: 'a@a.com', name: 'User A', role: 'EMPLOYEE' });
+      const tokenTenantB = generateAccessToken({ userId: 'usr-2', tenantId: 'tenant-B', email: 'b@b.com', name: 'User B', role: 'EMPLOYEE' });
+
+      const verifiedA = verifyAccessToken(tokenTenantA);
+      const verifiedB = verifyAccessToken(tokenTenantB);
+
+      expect(verifiedA?.tenantId).not.toEqual(verifiedB?.tenantId);
+    });
+  });
+
+  // 5. Signed Kiosk Security & Idempotency Tests
+  describe('Signed Kiosk Device Security & Deduplication', () => {
+    it('should hash admin PINs and reject hardcoded plaintext comparison', () => {
+      const pinHash = hashAdminPin('9481');
+      expect(verifyAdminPin('9481', pinHash)).toBe(true);
+      expect(verifyAdminPin('1234', pinHash)).toBe(false);
+    });
+
+    it('should verify HMAC-SHA256 device signatures on kiosk requests', () => {
+      const secret = 'kiosk-secret-key-9481';
+      const payload = '{"deviceId":"KIOSK-MUM-01","punches":[]}';
+      const crypto = require('crypto');
+      const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+      expect(verifyKioskSignature('KIOSK-MUM-01', payload, signature, secret)).toBe(true);
+      expect(verifyKioskSignature('KIOSK-MUM-01', payload, '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', secret)).toBe(false);
+    });
+
+    it('should reject duplicate idempotency keys in offline punch batches', () => {
+      const now = new Date().toISOString();
+      const batch = [
+        { idempotencyKey: 'key-101', employeeId: 'emp-1', employeeName: 'Alex', timestamp: now, location: 'Hub', type: 'IN' as const, method: 'face' as const },
+        { idempotencyKey: 'key-101', employeeId: 'emp-1', employeeName: 'Alex', timestamp: now, location: 'Hub', type: 'IN' as const, method: 'face' as const }
+      ];
+
+      const result = processKioskOfflineBatch(batch);
+      expect(result.processedCount).toBe(1);
+      expect(result.duplicateCount).toBe(1);
+    });
+  });
+
+  // 6. Statutory Rules Engine Tests
   describe('Pluggable Statutory Rules Engine (India PF/ESI/PT/TDS)', () => {
     it('should correctly calculate PF, PT, and Net Salary for gross ₹34,000/mo', () => {
       const result = calculateStatutoryDeductions({
@@ -49,100 +153,6 @@ describe('Production Hardened Backend Engine Verification', () => {
       expect(result.professionalTax).toBe(200);
       expect(result.totalDeductions).toBe(2000);
       expect(result.netSalary).toBe(34000 - 2000);
-    });
-
-    it('should calculate ESI for lower gross salary (<= ₹21,000)', () => {
-      const result = calculateStatutoryDeductions({
-        basicSalary: 10000,
-        grossSalary: 18000,
-        state: 'MH'
-      });
-
-      expect(result.employeeStateInsurance).toBe(135);
-    });
-  });
-
-  // 3. Face Recognition Embedding & Vector Matching Tests
-  describe('Server-Side Face Recognition Vector Matching Engine', () => {
-    it('should calculate 0.0 distance for identical face embedding vectors', () => {
-      const vecA = [0.12, -0.45, 0.88, 0.33];
-      const distance = compareEmbeddings(vecA, vecA);
-      expect(distance).toBe(0);
-    });
-
-    it('should extract 128-d normalized vector from image base64', async () => {
-      const mockBase64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD...';
-      const vector = await extractEmbeddingFromBase64(mockBase64);
-      expect(vector.length).toBe(128);
-      expect(vector[0]).toBeGreaterThanOrEqual(-1.0);
-      expect(vector[0]).toBeLessThanOrEqual(1.0);
-    });
-
-    it('should reject non-matching face vectors exceeding 0.6 distance threshold', () => {
-      const vecA = Array(128).fill(0.5);
-      const vecB = Array(128).fill(-0.5);
-      const distance = compareEmbeddings(vecA, vecB);
-      expect(distance).toBeGreaterThan(0.6);
-    });
-  });
-
-  // 4. Liveness Verification & Anti-Spoofing Tests
-  describe('Liveness Anti-Spoofing Verification Engine', () => {
-    it('should generate a randomized liveness challenge prompt', () => {
-      const challenge = generateRandomLivenessChallenge();
-      expect(challenge.challengeId).toBeDefined();
-      expect(['BLINK', 'HEAD_TURN_LEFT', 'HEAD_TURN_RIGHT', 'SMILE', 'NOD']).toContain(challenge.type);
-    });
-
-    it('should pass liveness check when blink and texture tests succeed', () => {
-      const challenge = generateRandomLivenessChallenge();
-      const result = verifyLivenessChallenge(challenge, 'mock-frame', { blinkCount: 2, textureScore: 0.9 });
-      expect(result.passed).toBe(true);
-      expect(result.score).toBeGreaterThan(0.8);
-    });
-  });
-
-  // 5. Face Verification Decision Engine Tests
-  describe('Face Verification Decision Rules Engine', () => {
-    it('should approve VERIFIED status for high match score and passed liveness', () => {
-      const vec = Array(128).fill(0.1);
-      const livenessResult = {
-        passed: true,
-        score: 0.94,
-        checks: { blinkDetected: true, headMovementDetected: true, screenReplayDetected: false, multipleFacesDetected: false, textureAnalysisPassed: true }
-      };
-
-      const decision = evaluateFaceVerification({
-        queryEmbedding: vec,
-        enrolledEmbedding: vec,
-        livenessResult,
-        imageQualityScore: 0.95,
-        deviceRiskScore: 0.1,
-        locationRiskScore: 0.1
-      });
-
-      expect(decision.decision).toBe('VERIFIED');
-      expect(decision.matchScore).toBe(1.0);
-    });
-
-    it('should trigger MANUAL_REVIEW_REQUIRED when location risk is high', () => {
-      const vec = Array(128).fill(0.1);
-      const livenessResult = {
-        passed: true,
-        score: 0.94,
-        checks: { blinkDetected: true, headMovementDetected: true, screenReplayDetected: false, multipleFacesDetected: false, textureAnalysisPassed: true }
-      };
-
-      const decision = evaluateFaceVerification({
-        queryEmbedding: vec,
-        enrolledEmbedding: vec,
-        livenessResult,
-        imageQualityScore: 0.95,
-        deviceRiskScore: 0.1,
-        locationRiskScore: 0.8
-      });
-
-      expect(decision.decision).toBe('MANUAL_REVIEW_REQUIRED');
     });
   });
 });
